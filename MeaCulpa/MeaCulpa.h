@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.002 (20150602)                        **
+**                       Version: 0.1.4.093 (20150602)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -96,6 +96,7 @@ typedef enum
     mc__Invalid__
 } mc_ErrorType;
 
+/* TODO: make convenient macros for all mc_ErrorTypes */
 /* Helper macros to initialize convenient error-objects */
 #define mc_OKAY_VA(O, I, ...) mc_ERROR(mc_Okay, O, I)
 #define mc_OKAY(...)          mc_OKAY_VA(__VA_ARGS__, 0, 0)

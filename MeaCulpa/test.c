@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.069 (20150602)                        **
+**                       Version: 0.1.4.087 (20150602)                        **
 **                           File: MeaCulpa/test.c                            **
 **                                                                            **
 **               For more information about the project, visit                **

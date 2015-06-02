@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.086 (20150602)                        ##
+##                       Version: 0.1.4.100 (20150602)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -26,3 +26,29 @@
 ##        called 'LICENSE'. If not, see <http://www.gnu.org/licenses>.        ##
 ##                                                                            ##
 ######################################################################## INFO ##
+
+#----------------------------- 3 POSTS IN 2 FILES -----------------------------#
+TODO:
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 1
+  - file: MeaCulpa/MeaCulpa.h
+    line: 99
+    note: |
+          make convenient macros for all mc_ErrorTypes 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: MeaCulpa/MeaCulpa.c
+    line: 88
+    note: |
+          Create mc_printer => custom printer for user defined errors.
+          Also, make mc_print only a wrapper around mc_printer 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
+  - file: MeaCulpa/MeaCulpa.c
+    line: 91
+    note: |
+          Create optional colored output 
+
+

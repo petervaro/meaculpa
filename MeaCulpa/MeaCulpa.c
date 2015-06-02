@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.079 (20150602)                        **
+**                       Version: 0.1.4.096 (20150602)                        **
 **                         File: MeaCulpa/MeaCulpa.c                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -46,6 +46,7 @@
             mc_Empty
             mc_Index
             mc_Key
+            mc__Invalid__
 */
 
 #define HINT_INDENT "       "
@@ -84,6 +85,11 @@ static const char *const ERROR_MESSAGES[] =
     [mc_Key]          = "Key not found",
 };
 
+/* TODO: Create mc_printer => custom printer for user defined errors.
+         Also, make mc_print only a wrapper around mc_printer */
+
+/* TODO: Create optional colored output */
+
 /* Print function */
 void
 mc_print(int                      error,
@@ -96,12 +102,12 @@ mc_print(int                      error,
         /* Start error */
         fprintf(stderr, "\nAn error occured:\n");
 
-    /* If `function` or `lines` argument are invalid */
+    /* If `function` argument is invalid */
     if (!function)
     {
         fprintf(stderr, INDENT "In function: mc_print()\n"
                         INDENT INDENT "Cannot print function name\n"
-                        INDENT INDENT "(Hint: The 2nd argument `function` "
+                        INDENT INDENT "(Hint: The 2nd argument 'function' "
                                       "is pointing to NULL)\n");
         return;
     }
@@ -124,16 +130,16 @@ mc_print(int                      error,
     {
         /* Print predefined messages */
         fprintf(stderr, INDENT INDENT "%s\n", ERROR_MESSAGES[error]);
-        fprintf(stderr, INDENT INDENT "(Type: `%s`)\n",
+        fprintf(stderr, INDENT INDENT "(Type: %s)\n",
                         ERROR_TYPE_NAMES[error]);
     }
 
-    /* If `function` or `lines` argument are invalid */
+    /* If `lines` argument is invalid */
     if (!lines && line_count)
     {
         fprintf(stderr, INDENT "In function: mc_print()\n"
                         INDENT INDENT "Cannot print user defined message\n"
-                        INDENT INDENT "(Hint: 4th argument `lines` "
+                        INDENT INDENT "(Hint: 4th argument 'lines' "
                                       "is pointing to NULL)\n");
         return;
     }

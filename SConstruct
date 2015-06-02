@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.079 (20150602)                        ##
+##                       Version: 0.1.4.091 (20150602)                        ##
 ##                              File: SConstruct                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -69,7 +69,7 @@ CLANGFLAGS = ['fcolor-diagnostics',
 CCFLAGS.extend(GCCFLAGS if CC == 'gcc' else CLANGFLAGS if CC == 'clang' else [])
 
 # C Pre-Processor Path (Include)
-CPPPATH = ['.',
+CPPPATH = ['MeaCulpa',
            '/usr/include',
            '/usr/local/include']
 
@@ -127,17 +127,22 @@ environment_test.Depends(environment_test_out, environment_to_lib)
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # INSTALLATION
 def install(*args, **kwargs):
-    if (platform == 'linux' or
-        platform == 'linux2'):
-            copy(join(input_dir,  'MeaCulpa.h'),
-                 join(CPPPATH[2], 'MeaCulpa.h'))
-            copy(join(output_dir, 'lib' + output_lib + '.so'),
-                 join(LIBPATH[1], 'lib' + output_lib + '.so'))
-            print "Installed"
+    if platform in ('linux', 'linux2'):
+        copy(join(input_dir,  'MeaCulpa.h'),
+             join(CPPPATH[2], 'MeaCulpa.h'))
+        copy(join(output_dir, 'lib' + output_lib + '.so'),
+             join(LIBPATH[1], 'lib' + output_lib + '.so'))
+        print "MeaCulpa has been installed"
     elif platform == 'darwin':
-        print "Not supported yet"
+        copy(join(input_dir,  'MeaCulpa.h'),
+             join(CPPPATH[2], 'MeaCulpa.h'))
+        copy(join(output_dir, 'lib' + output_lib + '.dylib'),
+             join(LIBPATH[1], 'lib' + output_lib + '.dylib'))
+        print "MeaCulpa has been installed"
     elif platform == 'win32':
-        print "Not supported yet"
+        print "Installation of MeaCulpa is not supported yet"
+    else:
+        print "Installation of MeaCulpa is not supported yet"
 
 environment_install = Environment().Command(target='install',
                                             source=None,

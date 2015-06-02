@@ -4,53 +4,58 @@
 What is `MeaCulpa`?
 -------------------
 
-A small and minimalistic error-handling library. The main goal was to fullfill
-the following requirements and create a(n):
+A small and minimalistic error-handling library written in C. The main goal was
+to fulfill the following requirements and create a(n):
 
   - (almost) zero-overhead,
   - stack-based (no dynamic allocations),
   - fully backtraced,
-  - produces meaningful error-messages,
+  - meaningful error-message generator,
   - thread-safe (locally handled),
   - type-safe,
-  - extensible/modular,
-  - abstractable/encapsulateable
+  - extensible, flexible and modular,
+  - truly encapsulated (higher level of abstraction),
   - maintainable,
 
-error-handling library, which can be used in all my personal (and in many other
-3rd-party) projects.
+error-handling library, which can be used in any C related projects. *(But of
+course in the first place it was made to be used by all my personal projects.)*
 
 
 
 Why another error-handling solution?
 ------------------------------------
 
-C's error handling is explicit, which means the user have to decide what to do
-locally, right after calling a function and checking its returning value.
+C's error handling is explicit, which means that we have to decide what to do
+immediately, right after calling a function by (most communly) checking its
+return value.
 
-This kind of explicitness is notnecessarely a bad thing, but it makes quite
-difficult to backtrace an error, therefore it is quite hard to produce
-meaningful error messages, which also shows the full backtrace from where the
-error caught and where it appeared first. However these are almost necessary
-informations for better debugging, bringing first class support from users and
-in overall making more stable and secure software.
+This kind of explicitness is not necessarily a bad thing, but it makes quite
+difficult to encapsulate the problem of error checking, or to backtrace the
+error when it has happened during a nested function call chain. And it is
+especially very hard to produce meaningful error messages when a function is
+well designed and generic enough to be used in several different situations.
+Even though this kind of help is almost mandatory to have better debugging
+sessions and to bring 'A' class support for clients/users, and overall to
+develop more stable and secure software.
 
-While most higher-level languages support some sort of exception handling, it
-has its own cost too. For instance, if inside an exception handler block there
-can be raised two exception of the same type, it is very difficult to recover
-from that if one wants to separate the two errors.
+While most higher-level languages support some sort of exception handling, those
+also have their own costs too. For instance, if inside an exception handler
+block two different functions can raise exceptions of the same type, it is kind
+of difficult to distinguish between the two errors and inform the user properly.
 
-Of course one possible solution in that case is, to use two separate exception
-handling blocks, or another one is to add extra informations to the exception
-itself and later on check for this information once the exception is handled
-but that's almost exactly the same, as having explicitly checking the two error-
-prone function calls separately.
+Of course one possible solution in that case is to use two separate exception
+handling blocks. Another one is to add extra informations to the exception
+object itself and later on check for this added data once the exception has
+caught. But these are almost exactly the same situations as explicitly and
+immediately checking the two function calls capable of raising exceptions
+separately.
 
-However one good thing about raised exceptions is that they will be raised with
-or without exception handling.
+*(However one good thing about exceptions is that they will be raised and most
+likely print nice error-messages even without carefully handling them.)*
 
-`MeaCulpa` tries to solve these questions without the need of a bloated and
-expensive framework, and being loyal to the C philosophy and tradition.
+`MeaCulpa` tries to solve these questions without the need of a bloated,
+process- and memory-expensive framework by also being loyal to the C philosophy
+and traditions -- it is still explicit and lets the user to have full control.
 
 
 
@@ -456,3 +461,12 @@ So inside our try-function we can do this:
         ...
     }
 ```
+
+The encapsulation, and reversed error propagation
+-------------------------------------------------
+
+- (encapsulation) All you have to worry about is the current function you are
+  developing, and the calls to other functions inside the current one
+- (reversed) The concept behind building a "fake" error-stack is, to deal with
+  the error on the top-level and dig down and start printing from the lowest
+  levels to build the stack.
