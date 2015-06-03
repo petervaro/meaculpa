@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.093 (20150602)                        **
+**                       Version: 0.1.4.101 (20150603)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -69,6 +69,14 @@ typedef enum
     /* This feature is not stable */
     mc_Experimental,
 
+    /* Standard based errors */
+    /* Memory allocation failed */
+    mc_StdMalloc,
+    /* Clear memory allocation failed */
+    mc_StdCalloc,
+    /* Memory reallocation failed */
+    mc_StdRealloc,
+
     /* File I/O based errors */
     /* End-Of-File error */
     mc_EOF,
@@ -105,9 +113,9 @@ typedef enum
 
 /* Print function */
 void
-mc_print(int                      error,
+mc_print(const int                error,
          const char *const        function,
-         size_t                   line_count,
+         const size_t             line_count,
          const char *const *const lines);
 
 #endif /* __MEA_CULPA_H_701077389399616__ */

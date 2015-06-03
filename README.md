@@ -1,5 +1,16 @@
-`MeaCulpa`
-==========
+![MeaCulpa](logo.svg)
+
+  - [What is `MeaCulpa`?](#what-is-meaculpa)
+  - [Why another solution?](#why-another-solution)
+  - [Are there any cons?](#are-there-any-cons)
+  - [How can I try it?](#how-can-i-try-it)
+  - [How should I use it?](#how-should-i-use-it)
+  - [First example](#first-example)
+  - [Second example](#second-example)
+  - [The index member](#the-index-member)
+  - [Predefined error types](#predefined-error-types)
+
+
 
 What is `MeaCulpa`?
 -------------------
@@ -7,14 +18,14 @@ What is `MeaCulpa`?
 A small and minimalistic error-handling library written in C. The main goal was
 to fulfill the following requirements and create a(n):
 
-  - (almost) zero-overhead,
-  - stack-based (no dynamic allocations),
+  - *(almost)* zero-overhead,
+  - stack-based *(no dynamic allocations)*,
   - fully backtraced,
   - meaningful error-message generator,
-  - thread-safe (locally handled),
+  - thread-safe *(locally handled)*,
   - type-safe,
   - extensible, flexible and modular,
-  - truly encapsulated (higher level of abstraction),
+  - truly encapsulated *(higher level of abstraction)*,
   - maintainable,
 
 error-handling library, which can be used in any C related projects. *(But of
@@ -22,8 +33,8 @@ course in the first place it was made to be used by all my personal projects.)*
 
 
 
-Why another error-handling solution?
-------------------------------------
+Why another solution?
+---------------------
 
 C's error handling is explicit, which means that we have to decide what to do
 immediately, right after calling a function by (most communly) checking its
@@ -59,105 +70,230 @@ and traditions -- it is still explicit and lets the user to have full control.
 
 
 
-Okay, these are the pros, but are there any cons?
--------------------------------------------------
+Are there any cons?
+-------------------
 
-Of course there are, there is no such thing as free meal, although there are
-very cheap ones, and `MeaCulpa` is one of them.
+Well, there is no such thing as free lunch, so of course there are down sides.
 
-One of the cons is, one has to be a bit more verbose then usual, because one has
-to write the so called "try-function" counterpart of a single function as well.
-Sure, it could bw cumbersome, and it needs focus and attention as well, but is
-for the greateelr good. The code containing the try-functions would be a nice
-experience to use for others, and it will also makes one lifes a hell lot easier
-when it comes to debugging.
+The first drawback of using the library is that you have to be a bit more
+verbose than usual, because you have to write the so called "try-function"
+counterpart of a function. It could be cumbersome, and it needs focus and
+attention to the details but it is for the greater good. The code containing
+try-functions will be a pleasant experience to use for others and for the future
+youself as well.
 
-The other con is, that it means a small overhead, because some checking (for
-exanple the owner matching) will run more than once, until one of the
-try-functions finally find a match. This is the only processing overhead
-`MeaCulpa` has compared to the traditional inplace return value checking.
+The other drawback is the very small processing-overhead as a side effect of
+some extra checkings (for example the error-object's owner matching, which will
+most likely run more than once, until one of the try-functions finally find a
+match). Actually this is the only overhead `MeaCulpa` has compared to the
+traditional return value checking.
 
-The other "overhead" this library has is the size of the program code. It won't
-effect the speed, but it will effect the size of the executable: it will be
-bigger.
+Another weakness of this library can be the effect of the size of the program
+code. It won't really effect the processing-speed, but it will effect the size
+of the executable as it will be bigger.
 
-And last but not least, one has to be careful when defining the owner IDs to be
-absolutely unique. It is not really a big deal, but if one misses it, it could
-lead to unexpected errors, which are most likely handled, but not the expected
-parts of the code will return them, and the backtrace messages won't be any help
-either as they are heavily relying on the owner IDs uniqueness.
+In my opinion these issues are neglectable compared to the pros this approach
+brings to the quality of the software.
 
 
 
-Yeah, but how does it work?
----------------------------
+How can I try it?
+-----------------
 
-First of all, `MeaCulpa` (the whole library has pseudo-namespace, so all the
-defined types, functions and macros has the `mc_` prefix before them) has an
-error type which a struct. This type will be the return value of all functions
-which wants to propagate their missbehaviour. The struct looks like this:
+First open a terminal, and make sure you have [`git`](https://git-scm.com) and
+[`SCons`](http://scons.org) installed.
+
+  - on Arch Linux:
+
+  ```
+  $ sudo pacman -S git scons
+  ```
+
+  - on Ubuntu:
+
+  ```
+  $ sudo apt-get install git scons
+  ```
+
+  - on Mac OS X *(You should consider using [`homebrew`](http://brew.sh))*:
+
+  ```
+  $ brew install git scons
+  ```
+
+Now you have to navigate to your downloads folder, and do the following:
+
+```
+$ cd downloads
+$ git clone https://github.com/petervaro/MeaCulpa.git
+$ cd MeaCulpa
+$ sudo scons install
+```
+
+After the compilation and installation succeded, you should run the tests as
+well, to make sure eveyrthing is working:
+
+```
+$ scons tests
+```
+
+If tests are running, you can start writing your own code using `MeaCulpa`. All
+you have to do is to include the header:
+
+```C
+#include <MeaCulpa.h>
+```
+
+And pass the following options to your compiler command:
+
+```
+-I/usr/local/include -L/usr/local/lib -lMeaCulpa
+```
+
+
+How should I use it?
+--------------------
+
+*(NOTE: All the public types, functions and macros are using pseudo namespace,
+the `mc_` prefix before their names.)*
+
+First of all, `MeaCulpa` has an error type which is a struct. This is the type
+that will be the return value of all functions that propagate their
+missbehaviours. The struct is defined as follows:
 
 ```C
 typedef struct
 {
-    int error; /* WHAT?  The error returned by the function                 */
-    int owner; /* WHO?   The function returned the error                    */
-    int index; /* WHERE? The location of the error returned by the function */
+    int      error; /* WHAT?  The error returned by the function */
+    mc_FnPtr owner; /* WHO?   The function returned the error */
+    int      index; /* WHERE? The location of the error in the function */
 } mc_Error;
 ```
 
-The first two members are mandatory but the index can be omitted in most of the
-cases. (This paper will discuss this later.)
+The first two members are mandatory but the last one, `index`, can be omitted in
+most of the cases. *(It will be discussed later on.)*
 
 The first member will be the type of the error, which specifies what went wrong,
-or indicates if everything is fine. `MeaCulpa` provides predefined errors, but
-the user can define custom ones as well, that's one of the reasons why the error
-member has a "broad" type instead of the predefined error-types' type
-the `mc_ErrorType`.
-
-The predefined error-types are:
+or indicates if everything was fine. `MeaCulpa` provides predefined errors, but
+the user can define custom ones as well -- that's one of the reasons why the
+`error` member has such a "broad" type as an `int` instead of the predefined
+error-types' type the `mc_ErrorType`. Which type looks like this:
 
 ```C
 typedef enum
 {
-    mc_OKAY,
-    mc_FAIL,
-    mc_STD_MALLOC,
-    mc_STD_MEMCPY,
-    mc_NULL_PTR_ARG,
-    mc_EMPTY,
-    mc_INDEX,
+    /* Generic errors */
+    mc_Okay,
+    mc_Fail,
+
+    /* Implementation based errors */
+    mc_Depricated,
+    mc_Experimental,
+
+    /* Standard based errors */
+    mc_StdMalloc,
+    mc_StdCalloc,
+    mc_StdRealloc,
+
+    /* File I/O based errors */
+    mc_EOF,
+
+    /* Mathematics based errors */
+    mc_ZeroDiv,
+
+    /* Function argument based errors */
+    mc_NullPtr,
+    mc_Value,
+
+    /* Containers based errors */
+    mc_Empty,
+    mc_Index,
+    mc_Key,
     ...
 } mc_ErrorType;
 ```
 
-(One can find more detailed informations about the meanings and conventional
-usages of these error-types in the documentation.)
+*(More detailed informations about the meanings and conventional usages of these
+error-types will be discussed later on.)*
 
-To be able to identify this error later (to build the error-stack on-the-fly) we
-have to specify the second member, the `owner` as well, which has to be a unique
-ID among the entire program. In almost all of the situations the owner should
-be the function, who returned the error. For that reason we will use .......
+To be able to identify the returned errors by the try-functions even long after
+they actually returned, we have to specify the second member, the `owner`. Since
+this identifier has to be unique among all the identifiers during the whole
+lifetime of the program to be able to build an error-stack like behaviour, we
+will use the functions themselves to identify them.
 
-A try-function has to be implemented as well, which will do the owner-matching
-and the error-message printing as well.
+Unfortunately -- according to the standard -- pointers to functions are not
+*ordinary* pointers, so they cannot be stored in a simple `void*`. That's why
+`MeaCulpa` has a special type `mc_FnPtr`, which is capable of string any kind of
+function pointers.
 
-For the error printing the try-function and we as well are using `MeaCulpa`'s
-own printer function, which is thw following:
+*(NOTE: Very important, one should never call the stored function directly!)*
+
+There is a convenient macro, which helps to cast the function to become a
+storable `owner` inside the error object:
+
+```C
+mc_Error
+my_beautiful_function(void)
+{
+    mc_Error signal = {mc_Okay, mc_OWNER(my_beautiful_function), 0};
+    ...
+}
+```
+
+Of course, there is an even more abstract function-like macro to create an error
+object and set the values for us:
+
+```C
+mc_Error
+my_beautiful_function(void)
+{
+    mc_Error signal = mc_ERROR(mc_Okay, my_beautiful_function);
+    ...
+}
+```
+
+`mc_Error` can even handle if the last, optional argument, the `index` is
+omitted. *(It will set it to the default `0`.)*
+
+We already talked about try-functions, which are needed to be implemented. These
+functions will do the owner-matching and the error-message printing, and they
+are responsible for the encapsulation/abstraction part of `MeaCulpa`.
+
+To produce prettified, properly printed error messages inside a try-function we
+will use `MeaCulpa`'s own printer function, which declared as follows:
 
 ```C
 void
-mc_Error_print(int      error,
-               size_t   line_count,
-               char   **lines);
+mc_print(const int                error,
+         const char *const        function,
+         const size_t             line_count,
+         const char *const *const lines);
 ```
 
-As you can see, it takes an error (`mc_Error.error`) and the number of lines we
-would like to print, and the lines themselves. The message it will print is a
-prettified error backtrace, with the library's predefined error message
-corresponding to the passed error, and then our passed messages. There is
-however exception: if we pass `mc_OKAY`, it will only print the messages we send
-them. This is very useful, because we will use it, to build the backtrace.
+Th function takes an error (which is the `mc_Error.error`); the name of the
+function, which returned the error; the number of extra lines (hints) the user
+wants to print; and the lines themselves to provide more accurate informations
+about the error.
+
+There is a special circumstance though, when we want to print the extra hints
+for error message, but as part of the backtrace. In that case, we have to pass
+`mc_Okay` as the `error` argument to this function, so it won't start a new
+"stack", but instead "appends" the passed messages to the existing one.
+
+Here is a sample output, how the error messages would look like:
+
+```
+An error occured:
+    In function: my_internal_function()
+        Argument is a pointer to NULL
+        (Type: mc_NullPtr)
+        (Hint: 1st argument is NULL)
+    In function: my_function()
+        (Hint: Internal error)
+    In function: main()
+        (Hint: my_function failed)
+```
 
 
 
@@ -169,8 +305,8 @@ which looks like this:
 
 ```C
 mc_Error
-SomeLib_new(void **const ptr
-            int         *value);
+SomeLib_Str_new(void **const self,
+                size_t      *size);
 ```
 
 Conventionally, this function can return `mc_OKAY` indicating that there was no
@@ -470,3 +606,8 @@ The encapsulation, and reversed error propagation
 - (reversed) The concept behind building a "fake" error-stack is, to deal with
   the error on the top-level and dig down and start printing from the lowest
   levels to build the stack.
+
+Predefined error types
+----------------------
+
+...

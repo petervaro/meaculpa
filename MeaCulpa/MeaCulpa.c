@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.096 (20150602)                        **
+**                       Version: 0.1.4.101 (20150603)                        **
 **                         File: MeaCulpa/MeaCulpa.c                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -34,7 +34,7 @@
 */
 
 /* Include MeaCulpa headers */
-#include <MeaCulpa.h> /*
+#include "MeaCulpa.h" /*
     const : mc_Okay
             mc_Fail
             mc_Depricated
@@ -60,6 +60,9 @@ static const char *const ERROR_TYPE_NAMES[] =
     [mc_Fail]         = "mc_Fail",
     [mc_Depricated]   = "mc_Depricated",
     [mc_Experimental] = "mc_Experimental",
+    [mc_StdMalloc]    = "mc_StdMalloc",
+    [mc_StdCalloc]    = "mc_StdCalloc",
+    [mc_StdRealloc]   = "mc_StdRealloc",
     [mc_EOF]          = "mc_EOF",
     [mc_ZeroDiv]      = "mc_ZeroDiv",
     [mc_NullPtr]      = "mc_NullPtr",
@@ -76,6 +79,9 @@ static const char *const ERROR_MESSAGES[] =
     [mc_Fail]         = "Unhandled error",
     [mc_Depricated]   = "This feature is deprecated",
     [mc_Experimental] = "This feature is experimental",
+    [mc_StdMalloc]    = "Memory allocation failed",
+    [mc_StdCalloc]    = "Clear memory allocation failed",
+    [mc_StdRealloc]   = "Memory reallocation failed",
     [mc_EOF]          = "End of File",
     [mc_ZeroDiv]      = "Division by 0",
     [mc_NullPtr]      = "Argument is a pointer to NULL",
@@ -92,9 +98,9 @@ static const char *const ERROR_MESSAGES[] =
 
 /* Print function */
 void
-mc_print(int                      error,
+mc_print(const int                error,
          const char *const        function,
-         size_t                   line_count,
+         const size_t             line_count,
          const char *const *const lines)
 {
     /* If print is not part of a trace-chain */
