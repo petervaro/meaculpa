@@ -1,4 +1,4 @@
-![MeaCulpa](blob/master/logo.svg?raw=true "logo")
+![MeaCulpa](logo.png?raw=true "logo")
 
   - [What is `MeaCulpa`?](#what-is-meaculpa)
   - [Why another solution?](#why-another-solution)
