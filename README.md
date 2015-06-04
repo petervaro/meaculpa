@@ -1,4 +1,4 @@
-![MeaCulpa](logo.svg?raw=true "logo")
+![MeaCulpa](blob/master/logo.svg?raw=true "logo")
 
   - [What is `MeaCulpa`?](#what-is-meaculpa)
   - [Why another solution?](#why-another-solution)
@@ -360,7 +360,7 @@ int
 main(void)
 {
     /* Error object and error messages */
-    static const char *const messages[] = {"Cannot create new RandChars"};
+    static const char *const messages[] = {"Cannot create new RandChars object"};
     mc_Error signal;
 
     /* Create RandChars object */
@@ -387,7 +387,7 @@ main(void)
 
 As you can see, here we were very strict, any error occures (`mc_Fail`,
 `mc_StdMalloc` and `mc_NullPtr`) we want to interrupt our program. If the first
-argument of `RandChar_new` was `NULL`, the above code would give us the
+argument of `RandChars_new` was `NULL`, the above code would give us the
 following error messages:
 
 ```
@@ -396,7 +396,7 @@ An error occured:
     mc_NullPtr: Argument is a pointer to NULL
     (Hint: 1st argument `self` is NULL)
   In function: main
-    (Hint: Cannot create new RandChar)
+    (Hint: Cannot create new RandChars object)
 ```
 
 Now, let's distinguish between the errors:
@@ -421,7 +421,7 @@ int
 main(void)
 {
     /* Error object and error messages */
-    static const char *const messages[] = {"Cannot create new RandChars"};
+    static const char *const messages[] = {"Cannot create new RandChars object"};
     mc_Error signal;
     RandChars *rc;
     char *s;
