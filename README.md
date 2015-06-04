@@ -1,4 +1,4 @@
-![MeaCulpa](logo.svg)
+![MeaCulpa](logo.svg?raw=true "logo")
 
   - [What is `MeaCulpa`?](#what-is-meaculpa)
   - [Why another solution?](#why-another-solution)
@@ -271,28 +271,27 @@ mc_print(const int                error,
          const char *const *const lines);
 ```
 
-Th function takes an error (which is the `mc_Error.error`); the name of the
+The function takes an error (which is the `mc_Error.error`); the name of the
 function, which returned the error; the number of extra lines (hints) the user
 wants to print; and the lines themselves to provide more accurate informations
 about the error.
 
 There is a special circumstance though, when we want to print the extra hints
-for error message, but as part of the backtrace. In that case, we have to pass
-`mc_Okay` as the `error` argument to this function, so it won't start a new
-"stack", but instead "appends" the passed messages to the existing one.
+for error message, but as part of the backtrace sequence. In that case, we have
+to pass `mc_Okay` as the `error` argument to this function, so it won't start a
+new "stack", but instead "appends" the passed messages to the existing one.
 
 Here is a sample output, how the error messages would look like:
 
 ```
 An error occured:
-    In function: my_internal_function()
-        Argument is a pointer to NULL
-        (Type: mc_NullPtr)
-        (Hint: 1st argument is NULL)
-    In function: my_function()
-        (Hint: Internal error)
-    In function: main()
-        (Hint: my_function failed)
+  In function: my_internal_function
+    mc_NullPtr: Argument is a pointer to NULL
+    (Hint: 1st argument is NULL)
+  In function: my_function
+    (Hint: Internal error)
+  In function: main
+    (Hint: my_function failed)
 ```
 
 
@@ -300,94 +299,164 @@ An error occured:
 First example
 -------------
 
-So let's take a look at an example. Let's say, we have a function from a library
-which looks like this:
+Let's take a look at practical usages of our error-handling solution through
+examples. For this we will "use" an imaginary 3rd-party library which also uses
+`MeaCulpa`. The public type and all its methods from this library are the
+followings:
 
 ```C
+/* Base type */
+typedef struct
+{
+    char *chars;
+} RandChars;
+
+/* Allocation and initialisation.
+   Returns: mc_Okay, mc_Fail, mc_StdMalloc, mc_NullPtr */
 mc_Error
-SomeLib_Str_new(void **const self,
-                size_t      *size);
+RandChars_new(RandChars **const self,
+              size_t            count);
+
+/* Try-function of the new method */
+mc_Error
+RandChars_new_TRY(mc_Error signal);
+
+/* Generates random characters */
+char *
+RandChars_gen(RandChars *const self);
+
+/* Deallocation */
+void
+RandChars_del(RandChars **const self);
 ```
 
-Conventionally, this function can return `mc_OKAY` indicating that there was no
-error, and `mc_FAIL` which means there was an unhandled error during the call of
+Conventionally, this function can return `mc_Okay` indicating that there was no
+error; and `mc_Fail` which means an unhandled error happened during the call of
 this function. Besides the conventional return values, it can also return
-`mc_STD_MALLOC` which means, that the `malloc` function declared in `stdlib.h`
-returned a `NULL` pointer; and it can also return `mc_NULL_PTR_ARG` which means,
-that the first argument `ptr` or the second one `value` is `NULL`.
+`mc_StdMalloc` which means, that the `malloc` function declared in `stdlib.h`
+returned a `NULL` pointer; and it can also return `mc_NullPtr` which means,
+that the first argument `self` is `NULL`.
 
-It also comes with a try-function, which looks like this:
-
-```C
-mc_Error
-SomeLib_Try_new(mc_Error);
-```
-
-As you can see, a try-function also returns an `mc_Error` which has to be two
-values only: `mc_OKAY` which indicates, that the try-function matched the owner
-and the proper actions took place; or `mc_FAIL` which means it could not find
-the owner of the error.
-
-Let's take a look at a very simple example, of how we may want to use this
-function and its try-function:
+Here is our very simple example, of how we may want to use this function and
+its try-function:
 
 ```C
+#include <stdio.h> /*
+    func  : printf
+*/
 #include <stdlib.h> /*
     const : EXIT_SUCCESS
             EXIT_FAILURE
 */
 
-#include <SomeLib.h> /*
-    func  : SomeLib_new
-            SomeLib_Try_new
-            SomeLib_del
+#include <RandChars.h> /*
+    func  : RandChars_new
+            RandChars_new_TRY
+            RandChars_gen
+            RandChars_del
 */
 
 int
 main(void)
 {
-    /* Create an error signal object */
+    /* Error object and error messages */
+    static const char *const messages[] = {"Cannot create new RandChars"};
     mc_Error signal;
 
-    /* Create data to be passed to SomeLib's functions */
-    void *p;
-    int   i = 12;
-
-    signal = SomeLib_new(&ptr, &i);
-    switch (signal.error)
+    /* Create RandChars object */
+    RandChars *rc;
+    signal = RandChars_new(&rc, 5);
+    /* If there was an error */
+    if (mc_NOT_OKAY(signal))
     {
-        /* If there was no error, we can move on */
-        case mc_OKAY;
-            break;
-
-        /* We choose, to deal with only the NULL pointer argument problem,
-           because we think we can handle it */
-        case mc_NULL_PTR_ARG:
-            ptr = NULL;
-            break;
-
-        /* If the call of this function returned mc_FAIL or mc_STD_MALLOC,
-           we decided we can't handle those exception, so we pass the signal
-           to the try-function. Hopefully it will print out a bunch of useful
-           information we could use to understand the nature of the problem.
-           After that, we print our own message, and quits our program with
-           indicating it was a failure */
-        default:
-            SomeLib_Try_new(signal);
-            /* We pass mc_OKAY to the printer function to indicate that this
-               is not the place where the error occured */
-            mc_Error_print(mc_OKAY, 1, "main(): Something went wrong...");
-            return EXIT_FAILURE;
+        /* Clean-up, print error messages and return */
+        RandChars_del(&rc);
+        RandChars_new_TRY(signal);
+        mc_print(mc_Okay, "main", 1, messages);
+        return EXIT_FAILURE;
     }
 
-    /* Let's clean-up the garbage */
-    SomeLib_del(&ptr);
+    /* If there was no error, generate random string and print it */
+    printf("%s\n", RandChars_gen(rc));
 
+    /* Clean up and return */
+    RandChars_del(&rc);
     return EXIT_SUCCESS;
 }
 ```
 
-Notice, that we did not care about the return value of the try-function. That's
+As you can see, here we were very strict, any error occures (`mc_Fail`,
+`mc_StdMalloc` and `mc_NullPtr`) we want to interrupt our program. If the first
+argument of `RandChar_new` was `NULL`, the above code would give us the
+following error messages:
+
+```
+An error occured:
+  In function: RandChars_new
+    mc_NullPtr: Argument is a pointer to NULL
+    (Hint: 1st argument `self` is NULL)
+  In function: main
+    (Hint: Cannot create new RandChar)
+```
+
+Now, let's distinguish between the errors:
+
+```C
+#include <stdio.h> /*
+    func  : printf
+*/
+#include <stdlib.h> /*
+    const : EXIT_SUCCESS
+            EXIT_FAILURE
+*/
+
+#include <RandChars.h> /*
+    func  : RandChars_new
+            RandChars_new_TRY
+            RandChars_gen
+            RandChars_del
+*/
+
+int
+main(void)
+{
+    /* Error object and error messages */
+    static const char *const messages[] = {"Cannot create new RandChars"};
+    mc_Error signal;
+    RandChars *rc;
+    char *s;
+
+    /* Create RandChars object */
+    signal = RandChars_new(&rc, 5);
+    /* If there was an error */
+    if (mc_NOT_OKAY(signal))
+        switch (signal.error)
+        {
+            /* We chose to deal with only the NULL pointer argument problem,
+               so we assign a default value to our string */
+            case mc_NullPtr:
+                s = "abcde";
+                break;
+
+            default:
+                RandChars_new_TRY(signal);
+                mc_print(mc_Okay, "main", 1, messages);
+                return EXIT_FAILURE;
+        }
+    /* If there was no error, generate random string */
+    else
+        s = RandChars_gen(rc);
+
+    /* Print the string we have */
+    printf("%s\n", s);
+
+    /* Clean up and return */
+    RandChars_del(&rc);
+    return EXIT_SUCCESS;
+}
+```
+
+Notice, that we did not check the return value of the try-function. That's only
 because this was such a simple example. But if we use this function inside
 another function, we have to be more careful than that!
 
@@ -397,12 +466,15 @@ Second example
 --------------
 
 ```C
+#include <stdio.h> /*
+    func  : printf
+*/
 #include <stdlib.h> /*
     const : EXIT_SUCCESS
             EXIT_FAILURE
 */
 
-#include <SomeLib.h> /*
+#include <RandChars.h> /*
     func  : SomeLib_new
             SomeLib_Try_new
             SomeLib_del

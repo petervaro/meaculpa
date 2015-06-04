@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.101 (20150603)                        **
+**                       Version: 0.1.4.119 (20150604)                        **
 **                         File: MeaCulpa/MeaCulpa.c                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -50,7 +50,7 @@
 */
 
 #define HINT_INDENT "       "
-#define INDENT "    "
+#define INDENT "  "
 #define INDENTED    INDENT "%s\n"
 
 /* Error type names */
@@ -111,7 +111,7 @@ mc_print(const int                error,
     /* If `function` argument is invalid */
     if (!function)
     {
-        fprintf(stderr, INDENT "In function: mc_print()\n"
+        fprintf(stderr, INDENT "In function: mc_print\n"
                         INDENT INDENT "Cannot print function name\n"
                         INDENT INDENT "(Hint: The 2nd argument 'function' "
                                       "is pointing to NULL)\n");
@@ -119,13 +119,13 @@ mc_print(const int                error,
     }
 
     /* Print function name */
-    fprintf(stderr, INDENT "In function: %s()\n", function);
+    fprintf(stderr, INDENT "In function: %s\n", function);
 
     /* If `error` argument is invalid */
     if (error <  mc_Okay ||
         error >= mc__Invalid__)
     {
-        fprintf(stderr, INDENT "In function: mc_print()\n"
+        fprintf(stderr, INDENT "In function: mc_print\n"
                         INDENT INDENT "Cannot print predefined error message\n"
                         INDENT INDENT "(Hint: The 1st argument "
                         "`error`is not an `mc_ErrorType`)\n");
@@ -133,17 +133,14 @@ mc_print(const int                error,
     }
 
     if (error != mc_Okay)
-    {
         /* Print predefined messages */
-        fprintf(stderr, INDENT INDENT "%s\n", ERROR_MESSAGES[error]);
-        fprintf(stderr, INDENT INDENT "(Type: %s)\n",
-                        ERROR_TYPE_NAMES[error]);
-    }
+        fprintf(stderr, INDENT INDENT "%s: %s\n", ERROR_TYPE_NAMES[error],
+                                                  ERROR_MESSAGES[error]);
 
     /* If `lines` argument is invalid */
     if (!lines && line_count)
     {
-        fprintf(stderr, INDENT "In function: mc_print()\n"
+        fprintf(stderr, INDENT "In function: mc_print\n"
                         INDENT INDENT "Cannot print user defined message\n"
                         INDENT INDENT "(Hint: 4th argument 'lines' "
                                       "is pointing to NULL)\n");

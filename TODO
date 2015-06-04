@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.108 (20150603)                        ##
+##                       Version: 0.1.4.136 (20150604)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -31,6 +31,13 @@
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
+  - file: MeaCulpa/MeaCulpa.h
+    line: 108
+    note: |
+          make convenient macros for all mc_ErrorTypes 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
   - file: MeaCulpa/MeaCulpa.c
     line: 94
     note: |
@@ -38,17 +45,10 @@ TODO:
           Also, make mc_print only a wrapper around mc_printer 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
+  # 3
   - file: MeaCulpa/MeaCulpa.c
     line: 97
     note: |
           Create optional colored output 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 3
-  - file: MeaCulpa/MeaCulpa.h
-    line: 107
-    note: |
-          make convenient macros for all mc_ErrorTypes 
 
 

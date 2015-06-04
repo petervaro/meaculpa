@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.101 (20150603)                        **
+**                       Version: 0.1.4.109 (20150604)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -49,7 +49,8 @@ typedef struct
 
 /* Helper macros for casting owner and matching ownership */
 #define mc_OWNER(F) ((mc_FnPtr)&F)
-#define mc_IS_OWNER(F, E) (mc_OWNER(F) == (E).owner)
+#define mc_IS_OWNER(F, E)  (mc_OWNER(F) == (E).owner)
+#define mc_NOT_OWNER(F, E) (mc_OWNER(F) != (E).owner)
 
 /* Helper macros to initialize error-object */
 #define mc_ERROR_VA(E, O, I, ...) {E, mc_OWNER(O), I}
@@ -110,6 +111,10 @@ typedef enum
 #define mc_OKAY(...)          mc_OKAY_VA(__VA_ARGS__, 0, 0)
 #define mc_FAIL_VA(O, I, ...) mc_ERROR(mc_Fail, O, I)
 #define mc_FAIL(...)          mc_FAIL_VA(__VA_ARGS__, 0, 0)
+
+/* Helper macros to check if there was an error */
+#define mc_IS_OKAY(E)  ((E).error == mc_Okay)
+#define mc_NOT_OKAY(E) ((E).error != mc_Okay)
 
 /* Print function */
 void
