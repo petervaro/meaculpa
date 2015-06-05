@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.101 (20150603)                        ##
+##                       Version: 0.1.4.157 (20150605)                        ##
 ##                              File: SConstruct                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -101,8 +101,6 @@ environment.VariantDir(variant_dir=build_dir,
 environment_to_lib = \
     environment.SharedLibrary(target=join(output_dir, output_lib),
                               source=[join(build_dir, f) for f in input_src])
-# Run maintain script first
-environment.Depends(environment_to_lib, maintain_run)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # TESTS
@@ -121,8 +119,32 @@ environment_test.VariantDir(variant_dir=build_dir,
 environment_test_out = \
     environment_test.Program(target=join(output_dir, 'test'),
                              source=[join(build_dir, 'test.c')])
-# Run maintain script first
-environment_test.Depends(environment_test_out, environment_to_lib)
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# DOC
+
+# Define variables
+CPPDEFINES = {
+    'E1a': None,
+    # 'E1b': None,
+    # 'E2' : None,
+}
+
+# Create environment
+environment_doc = \
+    Environment(CC=CC,
+                CCFLAGS=['-' + flag for flag in CCFLAGS if flag],
+                CPPPATH=CPPPATH,
+                CPPDEFINES=CPPDEFINES,
+                LIBPATH=LIBPATH,
+                LIBS=[output_lib])
+# Specify output directory
+environment_doc.VariantDir(variant_dir=build_dir,
+                           src_dir=input_dir)
+# Create program
+environment_doc_out = \
+    environment_doc.Program(target=join(output_dir, 'doc'),
+                            source=[join(build_dir, 'doc.c')])
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # INSTALLATION
@@ -147,4 +169,13 @@ def install(*args, **kwargs):
 environment_install = Environment().Command(target='install',
                                             source=None,
                                             action=install)
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Before creating lib, run maintain script
+environment.Depends(environment_to_lib, maintain_run)
+# Before install, create lib
 environment.Depends(environment_install, environment_to_lib)
+# Before running tests, install lib
+environment_test.Depends(environment_test_out, environment_install)
+# Before running docs, run rests
+environment_doc.Depends(environment_doc_out, environment_test_out)

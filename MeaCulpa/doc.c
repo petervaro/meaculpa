@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.122 (20150604)                        **
+**                       Version: 0.1.4.159 (20150605)                        **
 **                            File: MeaCulpa/doc.c                            **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -33,9 +33,12 @@
 #include <stdio.h> /*
     func  : printf
 */
+#include <stdlib.h> /*
+    const : EXIT_SUCCESS
+            EXIT_FAILURE
+*/
 
-#define FIRST_EXAMPLE
-// #define SECOND_EXAMPLE
+#include "MeaCulpa.h"
 
 typedef struct
 {
@@ -50,7 +53,7 @@ RandChars_new(RandChars **const self,
     (void)self;
     (void)count;
     // return (mc_Error)mc_FAIL(RandChars_new);
-    return (mc_Error)mc_ERROR(mc_NullPtr, RandChars_new);
+    return (mc_Error)mc_OKAY(RandChars_new);
 }
 mc_Error
 RandChars_new_TRY(mc_Error signal)
@@ -91,11 +94,62 @@ RandChars_new_TRY(mc_Error signal)
 }
 
 
-char *
-RandChars_gen(RandChars *const self)
+mc_Error
+RandChars_gen(RandChars  *const self,
+              char      **const buffer)
 {
     (void)self;
-    return NULL;
+    (void)buffer;
+    return (mc_Error)mc_ERROR(mc_NullPtr, RandChars_gen);
+}
+
+
+mc_Error
+RandChars_gen_TRY(mc_Error signal)
+{
+    static const char *const function = "RandChars_gen";
+    static const char *const messages[] =
+    {
+        "1st argument `self` is NULL",
+        "2nd argument `buffer` is NULL",
+        "One of the arguments is NULL, but the error-index is invalid",
+        "This should have never happened...",
+    };
+
+    mc_Error status = mc_FAIL(RandChars_gen_TRY);
+    if (mc_NOT_OWNER(RandChars_gen, signal))
+        return status;
+
+    status.error = mc_Okay;
+    switch (signal.error)
+    {
+        case mc_Okay:
+            break;
+
+        case mc_NullPtr:
+            switch (signal.index)
+            {
+                case 0:
+                    mc_print(mc_NullPtr, function, 1, messages);
+                    break;
+
+                case 1:
+                    mc_print(mc_NullPtr, function, 1, messages + 1);
+                    break;
+
+                default:
+                    mc_print(mc_NullPtr, function, 1, messages + 2);
+                    break;
+            }
+            break;
+
+        /* mc_Fail or any other */
+        default:
+            mc_print(signal.error, function, 1, messages + 3);
+            break;
+    }
+
+    return status;
 }
 
 
@@ -109,48 +163,180 @@ RandChars_del(RandChars **const self)
 
 
 /*----------------------------------------------------------------------------*/
+mc_Error
+my_RandChars_new_wrapper(RandChars **const self,
+                         size_t            count)
+{
+    mc_Error others,
+             signal = mc_FAIL(my_RandChars_new_wrapper);
+
+    others = RandChars_new();
+    if (mc_NOT_OKAY(others))
+        return others;
+
+    signal.error = mc_Okay;
+    return signal;
+}
+
+mc_Error
+my_RandChars_new_wrapper_TRY(mc_Error signal)
+{
+    mc_Error status = mc_FAIL(my_RandChars_new_wrapper_TRY));
+    static const char *const function = "my_RandChars_new_wrapper";
+    static const char *const messages =
+    {
+        "Cannot create new RandChars object",
+        "Unknown error",
+    };
+
+    if (mc_IS_OKAY(RandChars_new_TRY(signal)))
+    {
+        mc_print(mc_Okay, 1, function, messages);
+        status.error = mc_Okay;
+        return status;
+    }
+    else if (mc_IS_OWNER(my_RandChars_new_wrapper, signal))
+        return status;
+
+    status.error = mc_Okay;
+    switch (signal.error)
+    {
+        case mc_Okay:
+            break;
+
+        default:
+            mc_print(mc_Fail, 1, function, messages + 1);
+            break;
+    }
+
+    return status;
+}
+
+
+mc_Error
+my_RandChars_gen_wrapper(RandChars  *const self,
+                         char      **const buffer)
+{
+    mc_Error others,
+             signal = mc_FAIL(my_RandChars_gen_wrapper);
+
+    others = RandChars_gen();
+    if (mc_NOT_OKAY(others))
+        return others;
+
+    signal.error = mc_Okay;
+    return signal;
+}
+
+mc_Error
+my_RandChars_gen_wrapper_TRY(mc_Error signal)
+{
+    mc_Error status = mc_FAIL(my_RandChars_gen_wrapper_TRY));
+    return status;
+}
+
+/*----------------------------------------------------------------------------*/
+#ifdef E1a
 int
 main(void)
 {
-    static const char *const messages[] = {"Cannot create new RandChars"};
+    /* Error object and error messages */
     mc_Error signal;
-    RandChars *rc;
+    static const char *const messages[] =
+    {
+        "Cannot create new RandChars object",
+        "Cannot generate RandChars characters",
+    };
 
-#ifdef FIRST_EXAMPLE
+    /* Create RandChars object */
+    RandChars *rc;
     signal = RandChars_new(&rc, 5);
     if (mc_NOT_OKAY(signal))
     {
-        RandChars_del(&rc);
         RandChars_new_TRY(signal);
         mc_print(mc_Okay, "main", 1, messages);
-        return EXIT_FAILURE;
+        goto New_Error;
     }
 
-    printf("%s\n", RandChars_gen(rc));
-#endif /* FIRST_EXAMPLE */
-
-#ifdef SECOND_EXAMPLE
+    /* Generate random characters */
     char *s;
+    signal = RandChars_gen(rc, &s);
+    if (mc_NOT_OKAY(signal))
+    {
+        RandChars_gen_TRY(signal);
+        mc_print(mc_Okay, "main", 1, messages + 1);
+        goto Gen_Error;
+    }
 
+    /* If there was no error, print characters */
+    printf("%s\n", s);
+
+    /* Clean up and return */
+    RandChars_del(&rc);
+    return EXIT_SUCCESS;
+
+    /* If there was an error */
+    Gen_Error:
+    New_Error:
+        RandChars_del(&rc);
+        return EXIT_FAILURE;
+}
+#endif /* E1a */
+
+#ifdef E1b
+int
+main(void)
+{
+    /* Error object and error messages */
+    mc_Error signal;
+    static const char *const messages[] =
+    {
+        "Cannot create new RandChars object",
+        "Cannot generate RandChars characters",
+    };
+
+    /* Create RandChars object */
+    RandChars *rc;
     signal = RandChars_new(&rc, 5);
+    if (mc_NOT_OKAY(signal))
+    {
+        RandChars_new_TRY(signal);
+        mc_print(mc_Okay, "main", 1, messages);
+        goto New_Error;
+    }
+
+    /* Generate random characters */
+    char *s;
+    signal = RandChars_gen(rc, &s);
     if (mc_NOT_OKAY(signal))
         switch (signal.error)
         {
+            /* We chose to deal with only the NULL pointer argument problem,
+               so we assign a default value to our string */
             case mc_NullPtr:
                 s = "abcde";
                 break;
 
             default:
+                mc_print(mc_Okay, "main", 1, messages + 1);
                 RandChars_new_TRY(signal);
-                mc_print(mc_Okay, "main", 1, messages);
-                return EXIT_FAILURE;
+                goto Gen_Error;
         }
-    else
-        s = RandChars_gen(rc);
 
+    /* If there was no error, print characters */
     printf("%s\n", s);
-#endif /* SECOND_EXAMPLE */
 
+    /* Clean up and return */
     RandChars_del(&rc);
     return EXIT_SUCCESS;
+
+    /* If there was an error */
+    Gen_Error:
+    New_Error:
+        RandChars_del(&rc);
+        return EXIT_FAILURE;
 }
+#endif /* E1b */
+
+#ifdef E2
+#endif /* E2 */

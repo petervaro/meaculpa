@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.109 (20150604)                        **
+**                       Version: 0.1.4.158 (20150605)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -34,6 +34,10 @@
 /* Include standard headers */
 #include <stddef.h> /*
     type  : size_t
+*/
+#include <stdio.h> /*
+    const : stderr
+    func  : fprintf
 */
 
 /* Generic function pointer type */
@@ -100,8 +104,9 @@ typedef enum
     mc_Key,
 
     /* THIS ENUM MUST BE THE LAST ONE
-       DO NOT USE THIS ENUM WITH cx_Error_print()
-       Indicating the last enum, which is invalid */
+       DO NOT USE THIS ENUM WITH mc_print()
+       (This is the last enum, which is used to
+       identify the last valid enum) */
     mc__Invalid__
 } mc_ErrorType;
 
@@ -116,9 +121,70 @@ typedef enum
 #define mc_IS_OKAY(E)  ((E).error == mc_Okay)
 #define mc_NOT_OKAY(E) ((E).error != mc_Okay)
 
+#define _HINT_IND "       "
+#define _IND      "  "
+
+/* Generic error printing macro */
+#define mc_PRINT(error,                                                        \
+                 function,                                                     \
+                 line_count,                                                   \
+                 lines,                                                        \
+                 PRINTER,                                                      \
+                 MIN_VALID,                                                    \
+                 MAX_VALID,                                                    \
+                 TYPE_NAMES,                                                   \
+                 MESSAGES)                                                     \
+    do                                                                         \
+    {                                                                          \
+        /* If print is not part of a trace-chain */                            \
+        if (error != mc_Okay)                                                  \
+            /* Start error */                                                  \
+            fprintf(stderr, "\nAn error occured:\n");                          \
+        /* If `function` argument is invalid */                                \
+        if (!function)                                                         \
+        {                                                                      \
+            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
+                            _IND _IND "Cannot print function name\n"           \
+                            _IND _IND "(Hint: The 2nd argument 'function' "    \
+                                          "is pointing to NULL)\n");           \
+            return;                                                            \
+        }                                                                      \
+        /* Print function name */                                              \
+        fprintf(stderr, _IND "In function: %s\n", function);                   \
+        /* If `error` argument is invalid */                                   \
+        if (error <  MIN_VALID ||                                              \
+            error >= MAX_VALID)                                                \
+        {                                                                      \
+            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
+                            _IND _IND "Cannot print predefined error message\n"\
+                            _IND _IND "(Hint: The 1st argument "               \
+                            "`error`is not an `mc_ErrorType`)\n");             \
+            return;                                                            \
+        }                                                                      \
+        if (error != mc_Okay)                                                  \
+            /* Print predefined messages */                                    \
+            fprintf(stderr, _IND _IND "%s: %s\n", TYPE_NAMES[error],           \
+                                                      MESSAGES[error]);        \
+        /* If `lines` argument is invalid */                                   \
+        if (!lines && line_count)                                              \
+        {                                                                      \
+            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
+                            _IND _IND "Cannot print user defined message\n"    \
+                            _IND _IND "(Hint: 4th argument 'lines' "           \
+                                          "is pointing to NULL)\n");           \
+            return;                                                            \
+        }                                                                      \
+        /* Print user defined messages */                                      \
+        fprintf(stderr, _IND _IND "(Hint: %s", lines[0]);                      \
+        for (size_t i=1; i<line_count; i++)                                    \
+            fprintf(stderr, "\n" _IND _IND _HINT_IND "%s", lines[i]);          \
+        fprintf(stderr, ")\n");                                                \
+    }                                                                          \
+    while (0)
+
 /* Print function */
 void
-mc_print(const int                error,
+mc_print(const mc_ErrorType       error,
          const char *const        function,
          const size_t             line_count,
          const char *const *const lines);

@@ -8,7 +8,11 @@
   - [First example](#first-example)
   - [Second example](#second-example)
   - [The index member](#the-index-member)
+  - [Custom error types](#custom-error-types)
+  - [Summary](#summary)
   - [Predefined error types](#predefined-error-types)
+  - [Public macros](#public-macros)
+  - [Public functions](#public-functions)
 
 
 
@@ -224,8 +228,8 @@ will use the functions themselves to identify them.
 
 Unfortunately -- according to the standard -- pointers to functions are not
 *ordinary* pointers, so they cannot be stored in a simple `void*`. That's why
-`MeaCulpa` has a special type `mc_FnPtr`, which is capable of string any kind of
-function pointers.
+`MeaCulpa` has a special type `mc_FnPtr`, which is capable of storing any kind
+of function pointers.
 
 *(NOTE: Very important, one should never call the stored function directly!)*
 
@@ -253,7 +257,7 @@ my_beautiful_function(void)
 }
 ```
 
-`mc_Error` can even handle if the last, optional argument, the `index` is
+`mc_ERROR` can even handle if the last, optional argument, the `index` is
 omitted. *(It will set it to the default `0`.)*
 
 We already talked about try-functions, which are needed to be implemented. These
@@ -265,7 +269,7 @@ will use `MeaCulpa`'s own printer function, which declared as follows:
 
 ```C
 void
-mc_print(const int                error,
+mc_print(const mc_ErrorType       error,
          const char *const        function,
          const size_t             line_count,
          const char *const *const lines);
@@ -321,9 +325,15 @@ RandChars_new(RandChars **const self,
 mc_Error
 RandChars_new_TRY(mc_Error signal);
 
-/* Generates random characters */
-char *
-RandChars_gen(RandChars *const self);
+/* Generates random characters
+   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1 */
+mc_Error
+RandChars_gen(RandChars  *const self,
+              char      **const buffer);
+
+/* Try-function of gen method */
+mc_Error
+RandChars_gen_TRY(mc_Error signal)
 
 /* Deallocation */
 void
@@ -360,46 +370,73 @@ int
 main(void)
 {
     /* Error object and error messages */
-    static const char *const messages[] = {"Cannot create new RandChars object"};
     mc_Error signal;
+    static const char *const messages[] =
+    {
+        "Cannot create new RandChars object",
+        "Cannot generate RandChars characters",
+    };
 
     /* Create RandChars object */
     RandChars *rc;
     signal = RandChars_new(&rc, 5);
-    /* If there was an error */
     if (mc_NOT_OKAY(signal))
     {
-        /* Clean-up, print error messages and return */
-        RandChars_del(&rc);
         RandChars_new_TRY(signal);
         mc_print(mc_Okay, "main", 1, messages);
-        return EXIT_FAILURE;
+        goto New_Error;
     }
 
-    /* If there was no error, generate random string and print it */
-    printf("%s\n", RandChars_gen(rc));
+    /* Generate random characters */
+    char *s;
+    signal = RandChars_gen(rc, &s);
+    if (mc_NOT_OKAY(signal))
+    {
+        RandChars_gen_TRY(signal);
+        mc_print(mc_Okay, "main", 1, messages + 1);
+        goto Gen_Error;
+    }
+
+    /* If there was no error, print characters */
+    printf("%s\n", s);
 
     /* Clean up and return */
     RandChars_del(&rc);
     return EXIT_SUCCESS;
+
+    /* If there was an error */
+    Gen_Error:
+    New_Error:
+        RandChars_del(&rc);
+        return EXIT_FAILURE;
 }
 ```
 
-As you can see, here we were very strict, any error occures (`mc_Fail`,
-`mc_StdMalloc` and `mc_NullPtr`) we want to interrupt our program. If the first
-argument of `RandChars_new` was `NULL`, the above code would give us the
-following error messages:
+As you can see, here we were very strict, any error occures in `RandChars_new`
+(`mc_Fail`, `mc_StdMalloc` and `mc_NullPtr`) or in `RandChars_gen` (`mc_Fail`
+and `mc_NullPtr`) we want to interrupt our program. If the first argument of
+`RandChars_gen` was `NULL`, the above code would give us the following error
+messages:
 
 ```
 An error occured:
-  In function: RandChars_new
+  In function: RandChars_gen
     mc_NullPtr: Argument is a pointer to NULL
     (Hint: 1st argument `self` is NULL)
   In function: main
-    (Hint: Cannot create new RandChars object)
+    (Hint: Cannot generate RandChars characters)
 ```
 
-Now, let's distinguish between the errors:
+Also notice, that we used a macro to check if the signal is `mc_Okay` or not.
+Actually there are two of these convenient macros:
+
+```C
+#define mc_IS_OKAY(E)  ((E).error == mc_Okay)
+#define mc_NOT_OKAY(E) ((E).error != mc_Okay)
+```
+
+Now, let's distinguish between the possible errors and let's try to recover from
+one of them:
 
 ```C
 #include <stdio.h> /*
@@ -421,14 +458,26 @@ int
 main(void)
 {
     /* Error object and error messages */
-    static const char *const messages[] = {"Cannot create new RandChars object"};
     mc_Error signal;
-    RandChars *rc;
-    char *s;
+    static const char *const messages[] =
+    {
+        "Cannot create new RandChars object",
+        "Cannot generate RandChars characters",
+    };
 
     /* Create RandChars object */
+    RandChars *rc;
     signal = RandChars_new(&rc, 5);
-    /* If there was an error */
+    if (mc_NOT_OKAY(signal))
+    {
+        RandChars_new_TRY(signal);
+        mc_print(mc_Okay, "main", 1, messages);
+        goto New_Error;
+    }
+
+    /* Generate random characters */
+    char *s;
+    signal = RandChars_gen(rc, &s);
     if (mc_NOT_OKAY(signal))
         switch (signal.error)
         {
@@ -439,31 +488,37 @@ main(void)
                 break;
 
             default:
+                mc_print(mc_Okay, "main", 1, messages + 1);
                 RandChars_new_TRY(signal);
-                mc_print(mc_Okay, "main", 1, messages);
-                return EXIT_FAILURE;
+                goto Gen_Error;
         }
-    /* If there was no error, generate random string */
-    else
-        s = RandChars_gen(rc);
 
-    /* Print the string we have */
+    /* If there was no error, print characters */
     printf("%s\n", s);
 
     /* Clean up and return */
     RandChars_del(&rc);
     return EXIT_SUCCESS;
+
+    /* If there was an error */
+    Gen_Error:
+    New_Error:
+        RandChars_del(&rc);
+        return EXIT_FAILURE;
 }
 ```
 
-Notice, that we did not check the return value of the try-function. That's only
-because this was such a simple example. But if we use this function inside
-another function, we have to be more careful than that!
+Notice, that we did not check the return values of the try-functions. That's
+only because this was such a simple example. But if we use these functions
+inside other functions, we have to be more careful than that!
 
 
 
 Second example
 --------------
+
+In this example, we will wrap the previously used `RandChars_new` and
+`RandChars_gen` functions, and we will write our first try-functions to do so:
 
 ```C
 #include <stdio.h> /*
@@ -590,96 +645,360 @@ main(void)
 }
 ```
 
+Hopefully you have noticed, that the wrapper functions are using two separate
+`mc_Error` objects: `others` and `signal`.
+
+Also it is very important, that the try-functions has their own `mc_Error`
+objects as well (`status`) which is indicates if these functions have matched
+the error's owner or not.
+
 
 
 The index member
 ----------------
 
-Because these examples were pretty simple, there was no need to use the third
-member of the `mc_Error` object, the `index`. Think about a function, which has
-several `malloc` calls in it. As we have a nice `mc_STD_MALLOC` error-type, we
-can inform the caller, that one of the `malloc` havae failed. The question is,
-when we are writing the try-function, how could we tell which call failed inside
-the function?
-
-This is where the `index` member comes in, as it ables us, to enumerate our
-errors, which is sort of a position inside the function. Something like this:
+You may have noticed, that the comment above the `RandChars_gen` defines two
+errors of the same type:
 
 ```C
-{
-    mc_Error signal = {mc_FAIL, ..., 0};
-
-    ...
-
-    void *p;
-    char *s;
-
-    if (!p = malloc(SOME_SIZE))
-    {
-        signal.error = mc_STD_MALLOC;
-        signal.index = 1;
-        goto P_Alloc_Failed;
-    }
-
-    ...
-
-    if (!s = malloc(sizeof "hello there"))
-    {
-        signal.error = mc_STD_MALLOC;
-        signal.index = 2;
-        goto S_Alloc_Failed;
-    }
-
-    ...
-
-    S_Alloc_Failed:
-        free(p);
-    P_Alloc_Failed:
-        return signal;
-}
+/* Generates random characters
+   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1 */
+mc_Error
+RandChars_gen(RandChars  *const self,
+              char      **const buffer);
 ```
 
-So inside our try-function we can do this:
+That's because the function takes two pointers as arguments, so it can propagate
+different errors based on which one is not the value the function expected. And
+it can do so, even if the two errors have the same type! Which is very useful,
+as you could have seen, because we can ignore these extra informations, and only
+act based on the error-type alone. (Which we did in the previous example.) This
+kind of enumeration of errors makes it possible to print the following error
+messages when the `self` argument is `NULL`:
+
+```
+An error occured:
+  In function: RandChars_gen
+    mc_NullPtr: Argument is a pointer to NULL
+    (Hint: 1st argument `self` is NULL)
+  In function: main
+    (Hint: Cannot generate RandChars characters)
+```
+
+and prints these ones, when `buffer` is `NULL`:
+
+```
+An error occured:
+  In function: RandChars_gen
+    mc_NullPtr: Argument is a pointer to NULL
+    (Hint: 2nd argument `buffer` is NULL)
+  In function: main
+    (Hint: Cannot generate RandChars characters)
+```
+
+So you can think of indices of errors as the positions of errors inside a
+function. Here is the possible implementation of `RandChars_gen_TRY` function:
+
 
 ```C
+mc_Error
+RandChars_gen_TRY(mc_Error signal)
 {
-    ...
+    static const char *const function = "RandChars_gen";
+    static const char *const messages[] =
+    {
+        "1st argument `self` is NULL",
+        "2nd argument `buffer` is NULL",
+        "One of the arguments is NULL, but the error-index is invalid",
+        "This should have never happened...",
+    };
 
+    mc_Error status = mc_FAIL(RandChars_gen_TRY);
+    if (mc_NOT_OWNER(RandChars_gen, signal))
+        return status;
+
+    status.error = mc_Okay;
     switch (signal.error)
     {
-        ...
+        case mc_Okay:
+            break;
 
-        case mc_STD_MALLOC:
+        case mc_NullPtr:
             switch (signal.index)
             {
-                /* If p's allocation failed */
+                case 0:
+                    mc_print(mc_NullPtr, function, 1, messages);
+                    break;
+
                 case 1:
-                    ...
+                    mc_print(mc_NullPtr, function, 1, messages + 1);
                     break;
 
-                /* If s' allocation failed */
-                case 2:
-                    ...
+                default:
+                    mc_print(mc_NullPtr, function, 1, messages + 2);
                     break;
-
-                ...
             }
             break;
 
-        ...
+        /* mc_Fail or any other */
+        default:
+            mc_print(signal.error, function, 1, messages + 3);
+            break;
     }
+
+    return status;
+}
 ```
 
-The encapsulation, and reversed error propagation
--------------------------------------------------
 
-- (encapsulation) All you have to worry about is the current function you are
-  developing, and the calls to other functions inside the current one
-- (reversed) The concept behind building a "fake" error-stack is, to deal with
-  the error on the top-level and dig down and start printing from the lowest
-  levels to build the stack.
+
+Custom error types
+------------------
+
+As we mentioned before, you can easily extend the predefined error-types and
+the error messages, if you need more fine tuned or custom errors inside your
+project. All you need is to use `mc__Invalid__` to start your `enum` types and
+the `mc_PRINT` macro to get formatted error messages.
+
+```C
+/* Include standard headers */
+#include <stdlib.h> /*
+    const : EXIT_SUCCESS
+*/
+
+/* Include MeaCulpa headers */
+#include <MeaCulpa.h> /*
+    enum  : mc_Okay
+            mc_StdMalloc
+            mc__Invalid__
+    macro : mc_PRINT
+            mc_print
+*/
+
+typedef enum
+{
+    MyError_X = mc__Invalid__,
+    MyError_Y,
+    MyError_Z,
+    MyError__Invalid__,
+} MyErrorType;
+
+/* Error type names */
+static const char *const MY_ERROR_TYPE_NAMES[] =
+{
+    [MyError_X] = "MyError_X",
+    [MyError_Y] = "MyError_Y",
+    [MyError_Z] = "MyError_Z",
+};
+
+/* Predefined error messages */
+static const char *const MY_ERROR_MESSAGES[] =
+{
+    [MyError_X] = "X happened",
+    [MyError_Y] = "Y happened",
+    [MyError_Z] = "Z happened",
+};
+
+/* Custom printer */
+void
+MyError_print(const int                error,
+              const char *const        function,
+              const size_t             line_count,
+              const char *const *const lines)
+{
+    if (error < mc__Invalid__)
+    {
+        mc_print(error, function, line_count, lines);
+        return;
+    }
+
+    mc_PRINT(error,
+             function,
+             line_count,
+             lines,
+             "MyError_print",
+             MyError_X,
+             MyError__Invalid__,
+             MY_ERROR_TYPE_NAMES,
+             MY_ERROR_MESSAGES);
+}
+
+int
+main(void)
+{
+    static const char *const messages[] =
+    {
+        "Oh, snap...",
+        "Shoot!!!",
+    };
+    MyError_print(mc_StdMalloc, "main", 1, messages);
+    MyError_print(MyError_X,    "main", 1, messages + 1);
+    return EXIT_SUCCESS;
+}
+```
+
+This will produce the following output:
+
+```
+An error occured:
+  In function: main
+    mc_StdMalloc: Memory allocation failed
+    (Hint: Oh, snap...)
+
+An error occured:
+  In function: main
+    MyError_X: X happened
+    (Hint: Shoot!!!)
+```
+
+
+
+Summary
+-------
+
+As you can see, `MeaCulpa` is more of a "best-practice" which happens to have a
+very small library to support the convenient use-cases. It can help you
+encapsulate the error checking, so you only have to worry about the current
+function and the functions you are calling inside it. As a result, it mimics
+an error-stack like behaviour and produces beautiful, useful and proper
+error-messages.
+
+
 
 Predefined error types
 ----------------------
 
-...
+- `mc_Okay`: *(generic)*
+
+    - It can indicate, that there were no error happened during the call of the
+      function
+
+    - It can indicate, (when it is returned by a try-function) that the
+      ownership has been matched
+
+    - It can also be used by passing it as the first argument to the `mc_print`
+      function, indicating that the current error message is part of an error
+      message sequence.
+
+- `mc_Fail`: *(generic)*
+
+    - It can indicate, that there was an unknown/unhandled error happened during
+      the call of the function
+
+    - It can indicate, (when it is returned by a try-function) that the
+      ownership has mismatched
+
+- `mc_Depricated`: *(implementation based)*
+
+    - Indicates, that the function which returned this is depricated. (It is
+      more like a warning)
+
+- `mc_Experimental`: *(implementation based)*
+
+    - Indicates, that the function which returned this is experimental. (It is
+      more like a warning)
+
+- `mc_StdMalloc`: *(standard based)*
+
+    - Indicates, that the function `malloc` declared in `<stdlib.h>` in the C
+      Standard returned `NULL`
+
+- `mc_StdCalloc`: *(standard based)*
+
+    - Indicates, that the function `calloc` declared in `<stdlib.h>` in the C
+      Standard returned `NULL`
+
+- `mc_StdRealloc`: *(standard based)*
+
+    - Indicates, that the function `realloc` declared in `<stdlib.h>` in the C
+      Standard returned `NULL`
+
+- `mc_EOF`: *(file I/O based)*
+
+    - Indicates, that the function reached the end of the file
+
+- `mc_ZeroDiv`: *(math based)*
+
+    - Indicates, that
+
+- `mc_NullPtr`: *(function argument based)*
+
+    - Indicates, that argument is pointing to `NULL`
+
+- `mc_Value`: *(function argument based)*
+
+    - Indicates, that argument has an invalid value
+
+- `mc_Empty`: *(container based)*
+
+    - Indicates, that the container is empty
+
+- `mc_Index`: *(container based)*
+
+    - Indicates, that index is out of range
+
+- `mc_Key`: *(container based)*
+
+    - Indicates, that key is not in the container
+
+
+
+Public macros
+-------------
+
+- `mc_OWNER(function)`:
+
+    - Casts the input `function` to an `mc_FnPtr` generic function pointer
+
+- `mc_IS_OWNER(function, error)`:
+
+    - Checks if `error.owner` is the `function`
+
+- `mc_NOT_OWNER(function, error)`:
+
+    - Checks if `error.owner` is not the `function`.
+
+- `mc_ERROR(error, function [, index])`:
+
+    - Creates a new `mc_Error` object. The `index` input is optional.
+
+- `mc_OKAY(function [, index])`:
+
+    - Creates a new `mc_Error` object, with `error` member set to `mc_Okay`. The
+      `index` input is optional.
+
+- `mc_FAIL(function [, index])`:
+
+    - Creates a new `mc_Error` object, with `error` member set to `mc_Fail`. The
+      `index` input is optional.
+
+- `mc_IS_OKAY(error)`:
+
+    - Checks if `error.error` is `mc_Okay`.
+
+- `mc_NOT_OKAY(error)`:
+
+    - Checks if `error.error` is not `mc_Okay`.
+
+- `mc_PRINT(error, function, line_count, lines, PRINTER, MIN_VALID, MAX_VALID,
+   TYPE_NAMES, MESSAGES)`:
+
+    - Prints error messages. Don't use this macro alone, only inside a printer
+      function (as macros are not type safe)
+    - `error`, `function`, `lines_count` and `lines` are the arguments from the
+      wrapper function (see `mc_print` for example)
+    - PRINTER has to be a `char*` literal, `MIN_VALID` and `MAX_VALID` has to be
+      `int`s, while `TYPE_NAMES` and `MESSAGES` has to be arrays of `char*`s
+
+
+
+Public functions
+----------------
+
+```C
+void
+mc_print(const mc_ErrorType       error,
+         const char *const        function,
+         const size_t             line_count,
+         const char *const *const lines);
+```
