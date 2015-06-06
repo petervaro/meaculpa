@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.165 (20150606)                        ##
+##                       Version: 0.1.6.181 (20150606)                        ##
 ##                              File: SConstruct                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -124,10 +124,11 @@ environment_test_out = \
 # DOC
 
 # Define variables
+# TODO: catch `scons doc E(1|2|3)` => and add the last arg to CPPDEFINES
 CPPDEFINES = {
-    # 'E1a': None,
-    'E1b': None,
-    # 'E2' : None,
+    # 'E1': None,
+    # 'E2': None,
+    'E3': None,
 }
 
 # Create environment
@@ -171,11 +172,39 @@ environment_install = Environment().Command(target='install',
                                             action=install)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# RUN TESTS
+
+# Create environment
+environment_tests = Environment()
+environment_tests_run = environment_tests.Command(target='tests',
+                                                  source=None,
+                                                  action='./' + join(output_dir, 'test'))
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# RUN DOC
+
+# Create environment
+environment_docs = Environment()
+environment_docs_run = environment_docs.Command(target='doc',
+                                                source=None,
+                                                action='./' + join(output_dir, 'doc'))
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# TODO: Rename environments to have meaningful names, because right now,
+#       this is a huge, stinky mess :/
+
 # Before creating lib, run maintain script
 environment.Depends(environment_to_lib, maintain_run)
 # Before install, create lib
 environment.Depends(environment_install, environment_to_lib)
-# Before running tests, install lib
+# Before compiling tests, install lib
 environment_test.Depends(environment_test_out, environment_install)
-# Before running docs, run rests
-environment_doc.Depends(environment_doc_out, environment_test_out)
+# Before running tests, compile them
+environment_tests.Depends(environment_tests_run, environment_test_out)
+# Before compiling doc, install lib
+environment_doc.Depends(environment_doc_out, environment_install)
+# Before running docs, compile them
+environment_docs.Depends(environment_docs_run, environment_doc_out)
+
+# Set default target
+Default(environment_to_lib)

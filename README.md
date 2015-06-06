@@ -8,6 +8,7 @@
   - [First example](#first-example)
   - [Second example](#second-example)
   - [The index member](#the-index-member)
+  - [Third example](#third-example)
   - [Custom error types](#custom-error-types)
   - [Summary](#summary)
   - [Predefined error types](#predefined-error-types)
@@ -159,8 +160,8 @@ And pass the following options to your compiler command:
 How should I use it?
 --------------------
 
-*(NOTE: All the public types, functions and macros are using pseudo namespace,
-the `mc_` prefix before their names.)*
+> NOTE: All the public types, functions and macros are using pseudo namespace,
+> the `mc_` prefix before their names.)*
 
 First of all, `MeaCulpa` has an error type which is a struct. This is the type
 that will be the return value of all functions that propagate their
@@ -235,7 +236,7 @@ Unfortunately -- according to the standard -- pointers to functions are not
 `MeaCulpa` has a special type `mc_FnPtr`, which is capable of storing any kind
 of function pointers.
 
-*(NOTE: Very important, one should never call the stored function directly!)*
+> NOTE: Very important, one should never call the stored function directly!
 
 There is a convenient macro, which helps to cast the function to become a
 storable `owner` inside the error object:
@@ -330,7 +331,7 @@ RandChars_new(RandChars **const self,
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Try-function of the new method */
 mc_Error
-RandChars_new_TRY(mc_Error signal);
+RandChars_new_TRY(const mc_Error signal);
 
 /*----------------------------------------------------------------------------*/
 /* Generates random characters
@@ -341,7 +342,7 @@ RandChars_gen(RandChars  *const self,
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Try-function of gen method */
 mc_Error
-RandChars_gen_TRY(mc_Error signal)
+RandChars_gen_TRY(const mc_Error signal)
 
 /*----------------------------------------------------------------------------*/
 /* Reallocation if necessary.
@@ -352,7 +353,17 @@ RandChars_grow(RandChars *self,
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Try-function of grow method */
 mc_Error
-RandChars_grow_TRY(mc_Error signal);
+RandChars_grow_TRY(const mc_Error signal);
+
+/*----------------------------------------------------------------------------*/
+/* Returns mc_Okay, mc_Fail, mc_NullPtr */
+mc_Error
+RandChars_len(RandChars *const self,
+              size_t          *length);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Try-function of len method */
+mc_Error
+RandChars_len_TRY(const mc_Error signal);
 
 /*----------------------------------------------------------------------------*/
 /* Deallocation */
@@ -372,8 +383,8 @@ declared in `stdlib.h` returned a `NULL` pointer.
 `mc_StdRealloc` is returned by `RandChars_grow` when the `realloc` function
 declared in `stdlib.h` returned a `NULL` pointer.
 
-`mc_NullPtr` is returned by `RandChars_new`, `RandChars_gen` and
-`RandChars_grow`, when their first argument `self` is `NULL`, or by
+`mc_NullPtr` is returned by `RandChars_new`, `RandChars_gen`, `RandChars_grow`
+and `RandChars_len` when their first argument `self` is `NULL`, or by
 `RandChars_gen`, when its second argument `buffer` is `NULL`.
 
 `mc_Memory` is returned by `RandChars_gen`, when the underlying buffer of a
@@ -403,13 +414,13 @@ int
 main(void)
 {
     /* Error object and error messages */
-    mc_Error signal;
-    static const char *const function = "main";
-    static const char *const messages[] =
+    static const char *const function   = "main",
+                      *const messages[] =
     {
         "Cannot create new RandChars object",
         "Cannot generate RandChars characters",
     };
+    mc_Error signal;
 
     /* Create RandChars object */
     RandChars *rc;
@@ -469,6 +480,11 @@ Actually there are two of these convenient macros:
 #define mc_NOT_OKAY(E) ((E).error != mc_Okay)
 ```
 
+
+
+Second example
+--------------
+
 Now, let's distinguish between the possible errors and let's try to recover from
 one of them:
 
@@ -495,14 +511,14 @@ int
 main(void)
 {
     /* Error object and error messages */
-    mc_Error signal;
-    static const char *const function = "main";
-    static const char *const messages[] =
+    static const char *const function   = "main",
+                      *const messages[] =
     {
         "Cannot create new RandChars object",
         "Cannot generate RandChars characters",
-        "Cannot increase size of character buffer",
+        "Cannot increase size of buffer",
     };
+    mc_Error signal;
 
     /* Create RandChars object */
     RandChars *rc;
@@ -570,146 +586,6 @@ inside other functions, we have to be more careful than that!
 
 
 
-Second example
---------------
-
-In this example, we will wrap the previously used `RandChars_new` and
-`RandChars_gen` functions, and we will write our first try-functions to do so:
-
-```C
-#include <stdio.h> /*
-    func  : printf
-*/
-#include <stdlib.h> /*
-    const : EXIT_SUCCESS
-            EXIT_FAILURE
-*/
-
-#include <RandChars.h> /*
-    func  : SomeLib_new
-            SomeLib_Try_new
-            SomeLib_del
-    const : SomeLib_Owner_new
-*/
-
-/* ..... THE OWNER ID IS DEFINED HERE ..... */
-
-static mc_Error
-my_wrapper_new(char **string,
-               int   *value)
-{
-    mc_Error others,
-             signal = {mc_FAIL, Owner_my_wrapper_new, 0};
-
-    ...
-
-    others = SomeLib_new(string, value);
-    if (others.error != mc_OKAY)
-        return others;
-
-    if (!memcpy(*string, "wrapped", sizeof "wrapped"))
-    {
-        signal.error = mc_STD_MEMCPY;
-        return signal;
-    }
-
-    ...
-
-    return signal;
-}
-
-static mc_Error
-Try_my_wrapper_new(mc_Error signal)
-{
-    /* This error object will be returned by the try-function */
-    mc_Error status = {mc_FAIL, 0, 0};
-
-    /* Check if this error belongs to the SomeLib's function.
-       If so, it will do the rest for us, we can return a status
-       indicating, that we have found the owner */
-    if (SomeLib_Try_new(signal).error == mc_OKAY)
-    {
-        mc_Error_print(mc_OKAY, 1, "my_wrapper(): Internal error")
-        status.error = mc_OKAY;
-        return status;
-    }
-
-    /* Check if this error belongs to our my_wrapper function.
-       If not, we have to indicate this, by returning a failed status */
-    if (Owner_my_wrapper_new != signal.owner)
-        return status;
-
-    /* If this is our error, we have to deal with all the possible types */
-    switch (signal.error)
-    {
-        case mc_OKAY:
-            break;
-
-        case mc_FAIL:
-            mc_Error_print(mc_FAIL, 1, "my_wrapper(): Unhandled error");
-            break;
-
-        case mc_STD_MEMCPY:
-            mc_Error_print(mc_STD_MEMCPY, 1,
-                           "my_wrapper(): Cannot copy data to buffer");
-            break;
-    }
-
-    /* After the error have been reported, we can inform
-        the caller that we have owned this error */
-    status.error = mc_OKAY;
-    return status;
-}
-
-
-/* ..... THE DELETE WRAPPER'S CODE GOES HERE ..... */
-
-
-int
-main(void)
-{
-    /* Create an error signal object */
-    mc_Error signal;
-
-    /* Create data to be passed to our functions */
-    char *s;
-    int   i = 12;
-
-    signal = my_wrapper_new(&s, &i);
-    switch (signal.error)
-    {
-        case mc_OKAY;
-            break;
-
-        case mc_MEMCPY:
-            s = "Default text";
-            break;
-
-        default:
-            Try_my_wrapper(signal);
-            mc_Error_print(mc_OKAY, 1, "main(): Something went wrong...");
-            return EXIT_FAILURE;
-    }
-
-    /* Print what we have */
-    printf("%s", s);
-
-    /* Let's clean up the garbage */
-    my_wrapper_del(&s);
-
-    return EXIT_SUCCESS;
-}
-```
-
-Hopefully you have noticed, that the wrapper functions are using two separate
-`mc_Error` objects: `others` and `signal`.
-
-Also it is very important, that the try-functions has their own `mc_Error`
-objects as well (`status`) which is indicates if these functions have matched
-the error's owner or not.
-
-
-
 The index member
 ----------------
 
@@ -718,7 +594,7 @@ errors of the same type:
 
 ```C
 /* Generates random characters
-   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1 */
+   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1, mc_Memory */
 mc_Error
 RandChars_gen(RandChars  *const self,
               char      **const buffer);
@@ -766,6 +642,7 @@ RandChars_gen_TRY(mc_Error signal)
         "1st argument `self` is NULL",
         "2nd argument `buffer` is NULL",
         "One of the arguments is NULL, but the error-index is invalid",
+        "Size of `chars` member is too small",
         "This should have never happened...",
     };
 
@@ -796,15 +673,322 @@ RandChars_gen_TRY(mc_Error signal)
             }
             break;
 
+        case mc_Memory:
+            mc_print(mc_Memory, function, 1, messages + 3);
+            break;
+
         /* mc_Fail or any other */
         default:
-            mc_print(signal.error, function, 1, messages + 3);
+            mc_print(signal.error, function, 1, messages + 4);
             break;
     }
 
     return status;
 }
 ```
+
+
+
+Third example
+-------------
+
+In this example, we will wrap the previously used `RandChars_gen`,
+`RandChars_grow` and the never used `RandChars_len` functions and unite them in
+a safer and probably better function; and we will write our first try-function
+as the conterpart of this wrapper.
+
+We want to solve two problems here:
+
+- We want a local copy of the generated characters (mostly to avoid the dangling
+  pointer situation), and
+
+- We want to encapsulate the method how we handled the `mc_Memory` error in the
+  [Second example](#second-example)
+
+The following code is a bit longer, therefore it will be broken down into pieces
+expanded with some explanations:
+
+```C
+#include <stdio.h> /*
+    func  : printf
+*/
+#include <stdlib.h> /*
+    const : EXIT_SUCCESS
+            EXIT_FAILURE
+*/
+#include <string.h> /*
+    func  : memcpy
+*/
+
+#include <RandChars.h> /*
+    func  : RandChars_new
+            RandChars_new_TRY
+            RandChars_gen
+            RandChars_gen_TRY
+            RandChars_grow
+            RandChars_grow_TRY
+            RandChars_len
+            RandChars_len_TRY
+            RandChars_del
+*/
+
+/* Returns: mc_Okay, mc_Fail, mc_StdRealloc, mc_Value
+            mc_NullPtr:0, mc_NullPtr:1, mc_NullPtr:2 */
+mc_Error
+my_RandChars_gen(RandChars *const self,
+                 size_t           chars_count,
+                 char      *const buffer,
+                 size_t           buffer_size)
+{
+    /* Error objects and error messages */
+    mc_Error others,
+             signal = mc_FAIL(my_RandChars_gen);
+
+    /* Get number of characters which will be generated */
+    size_t len;
+    others = RandChars_len(self, &len);
+    if (mc_NOT_OKAY(others))
+        return others;
+
+    /* If buffer is pointing to NULL */
+    if (!buffer)
+    {
+        signal.error = mc_NullPtr;
+        signal.index = 2;
+        return signal;
+    }
+
+    /* If buffer's size is not enough */
+    if (buffer_size < chars_count ||
+        buffer_size < len)
+    {
+        signal.error = mc_Value;
+        return signal;
+    }
+
+    /* Generate random characters */
+    char *ptr;
+    others = RandChars_gen(self, &ptr);
+    switch (others.error)
+    {
+        case mc_Okay:
+            break;
+
+        /* We chose to deal with only the case, when there is not
+           enough memory in RandChars object, to generate chars */
+        case mc_Memory:
+            /* Increase buffer size */
+            others = RandChars_grow(self, chars_count);
+            if (mc_NOT_OKAY(others))
+                return others;
+
+            /* Generate random characters */
+            others = RandChars_gen(self, &ptr);
+            if (mc_NOT_OKAY(others))
+                return others;
+            break;
+
+        default:
+            return others;
+    }
+
+    /* Copy characters to buffer */
+    memcpy(buffer, ptr, len);
+
+    /* If everything went fine */
+    signal.error = mc_Okay;
+    return signal;
+}
+```
+
+Here is our encapsulation. First, you have to notice, that we are using not only
+one, but two `mc_Error` objects here, `others` and `signal`. That's because we
+never want to overwrite the returned errors by function calls inside our own
+function -- since that would remove all the `error`, `owner` and `index` data,
+which are necessary for the try-functions to match and act on the passed errors
+-- but we want to return them as they are. However we want to change values in
+our own error object, for example to change the `error` or the `index` members
+inside them.
+
+In the first few lines, we make sure, that all our arguments are valid. One
+interesting thing is, when we change the `index` from the default `0` to `2`. It
+is definitely not a necessary move, but we are trying to make sure, that our own
+`mc_NullPtr` error has a unique `index` so it can be identified based on that
+value. Sometimes it is very hard to make it unique, for example the function
+`RandChars_len` will return this error with the `index` set to `0` as well as
+the `RandChars_gen` and the `RandChars_grow`. However you may be tempted to
+write something like this:
+
+```C
+size_t len;
+others = RandChars_len(self, &len);
+if (mc_NOT_OKAY(others))
+{
+    others.index = 3;
+    return others;
+}
+```
+
+you should never do that(!), because you cannot know for sure, how
+`RandChars_len_TRY` is implemented and how it is matching for the different
+`mc_NullPtr` errors. *(Even if right now we do know that it doesn't care about
+the `index` member, maybe in the future it will!)*
+
+> NOTE: To be more concise in your own code, when you are designing a library,
+> like our imaginary `RandChars` one, you should think of situations like the
+> above (when more than one functions are called in the same scope, capable of
+> returning the same error-types), and add totally unique indexing across the
+> whole library to the same error-types.
+
+In the second half of the function, we generate the random characters, and we
+are using the previously tested method, to recover from the `mc_Memory` error.
+Notice the difference: there are no try-function calls here, as there are no
+`mc_print` calls as well. That's because our function only does two things:
+it fulfills its main purpose (generation and storing) and returns status, how
+everything worked out. All the error printing and matching are implemented in
+the try-function, which looks like this:
+
+```C
+mc_Error
+my_RandChars_gen_TRY(const mc_Error signal)
+{
+    /* Owner-matching status and error messages */
+    static const char *const function   = "my_RandChars_gen",
+                      *const messages[] =
+    {
+        "3rd argument `buffer` is a pointing to `NULL`",
+        "4th argument `buffer_size` is too small for the generated chars",
+        "Cannot get length of characters",
+        "Cannot generate random characters",
+        "Cannot increase size of buffer",
+        "This should have never happened...",
+    };
+    mc_Error status = mc_FAIL(my_RandChars_gen_TRY);
+
+    /* If the signal belongs to `RandChars_len` */
+    if (mc_IS_OKAY(RandChars_len_TRY(signal)))
+    {
+        status.error = mc_Okay;
+        mc_print(mc_Okay, function, 1, messages + 2);
+    }
+
+    /* If the signal belongs to `RandChars_gen` */
+    else if (mc_IS_OKAY(RandChars_gen_TRY(signal)))
+    {
+        status.error = mc_Okay;
+        mc_print(mc_Okay, function, 1, messages + 3);
+    }
+
+    /* If the signal belongs to `RandChars_grow` */
+    else if (mc_IS_OKAY(RandChars_grow_TRY(signal)))
+    {
+        status.error = mc_Okay;
+        mc_print(mc_Okay, function, 1, messages + 4);
+    }
+
+    /* If the signal does not belong to `my_RandChars_gen` */
+    else if (mc_NOT_OWNER(my_RandChars_gen, signal));
+        /* Do nothing */
+
+    /* If the signal belongs to `my_RandChars_gen` */
+    else
+    {
+        status.error = mc_Okay;
+        switch(signal.error)
+        {
+            case mc_Okay:
+                break;
+
+            case mc_NullPtr:
+                mc_print(mc_NullPtr, function, 1, messages);
+                break;
+
+            case mc_Value:
+                mc_print(mc_Value, function, 1, messages + 1);
+                break;
+
+            /* mc_Fail or any other */
+            default:
+                mc_print(signal.error, function, 1, messages + 5);
+                break;
+        }
+    }
+
+    /* Return owner-matching status */
+    return status;
+}
+```
+
+As you can see, basically it is a huge *branching*! First we want to try to find
+who is responsible for the error (owner-matching). Then if we are done with
+that, we add our own error-message, or if the error is ours, not the external
+functions' we called inside our function, then we match for the error types and
+print our error messages based on those.
+
+Notice, how we are building on other try-functions: if they found a match for
+the owner, they will print their own error messages (by building our *fake*
+error-stack) and also returning the `mc_Okay`, so we can print our own message.
+If they return `mc_Fail` (they couldn't find the owner) that also means, they
+won't print any error messages, so we can move on.
+
+If we find the owner, we return `mc_Okay`, if not we return the `mc_Fail` we
+defined in one of the first lines. (This is very important to do so, so others
+can wrap our try-functions in their own ones, as we did with the ones of
+`RandChars`'!)
+
+And last but not least, let's use what we have created:
+
+```C
+int
+main(void)
+{
+    #define CHARS_COUNT 5
+    /* Error object and erorr messages */
+    static const char *const function   = "main",
+                      *const messages[] =
+    {
+        "Cannot create new RandChars object",
+        "Cannot generate RandChars characters",
+    };
+    mc_Error signal;
+
+    /* Create RandChars object */
+    RandChars *rc;
+    signal = RandChars_new(&rc, 0);
+    if (mc_NOT_OKAY(signal))
+    {
+        RandChars_new_TRY(signal);
+        mc_print(mc_Okay, function, 1, messages);
+        goto New_Error;
+    }
+
+    char buffer[CHARS_COUNT];
+    signal = my_RandChars_gen(rc, CHARS_COUNT, buffer, CHARS_COUNT);
+    if (mc_NOT_OKAY(signal))
+    {
+        my_RandChars_gen_TRY(signal);
+        mc_print(mc_Okay, function, 1, messages + 1);
+        goto Gen_Error;
+    }
+
+    /* If there was no error, print characters */
+    printf("%s\n", buffer);
+
+    /* Clean up and return */
+    RandChars_del(&rc);
+    return EXIT_SUCCESS;
+
+    /* If there was an error */
+    Gen_Error:
+    New_Error:
+        RandChars_del(&rc);
+        return EXIT_FAILURE;
+}
+```
+
+We now arrived at the top-level, so we are checking for error directly, and
+since we handled everything we could in our `my_RandChars_gen` we can be very
+strict here, and anything goes wrong, we want our program to be terminated.
 
 
 
@@ -969,13 +1153,18 @@ Predefined error types
     - Indicates, that the function `realloc` declared in `<stdlib.h>` in the C
       Standard returned `NULL`
 
+- `mc_Memory`: *(memory based)*
+
+    - Indicates, that one of the memory portions used by the function is too
+      small
+
 - `mc_EOF`: *(file I/O based)*
 
     - Indicates, that the function reached the end of the file
 
 - `mc_ZeroDiv`: *(math based)*
 
-    - Indicates, that
+    - Indicates, that some of the divisions use `0` as the divisor
 
 - `mc_NullPtr`: *(function argument based)*
 

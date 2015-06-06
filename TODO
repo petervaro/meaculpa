@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.168 (20150606)                        ##
+##                       Version: 0.1.6.190 (20150606)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,20 +27,43 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 2 POSTS IN 1 FILES -----------------------------#
+#----------------------------- 5 POSTS IN 2 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
+  - file: SConstruct
+    line: 127
+    note: |
+          catch `scons doc E(1|2|3)` => and add the last arg to CPPDEFINES
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 2
+  - file: SConstruct
+    line: 193
+    note: |
+          Rename environments to have meaningful names, because right now,
+          this is a huge, stinky mess :/
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 3
   - file: MeaCulpa/MeaCulpa.h
-    line: 135
+    line: 34
+    note: |
+          How would we solve the version differences? eg.: when a new enum is
+          added to mc_ErrorTypes => static_assert? macro? etc? 
+
+  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+  # 4
+  - file: MeaCulpa/MeaCulpa.h
+    line: 138
     note: |
           make convenient macros for all mc_ErrorTypes 
 
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 2
+  # 5
   - file: MeaCulpa/MeaCulpa.h
-    line: 153
+    line: 156
     note: |
-          Create optional colored output 
+          Create optional colored output using `prism.h` 
 
 

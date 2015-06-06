@@ -5,7 +5,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.162 (20150606)                        ##
+##                       Version: 0.1.6.181 (20150606)                        ##
 ##                             File: maintain.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##

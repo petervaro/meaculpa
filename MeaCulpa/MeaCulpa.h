@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.162 (20150606)                        **
+**                       Version: 0.1.6.185 (20150606)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -30,6 +30,9 @@
 /* Header guard */
 #ifndef __MEA_CULPA_H_701077389399616__
 #define __MEA_CULPA_H_701077389399616__
+
+/* TODO: How would we solve the version differences? eg.: when a new enum is
+         added to mc_ErrorTypes => static_assert? macro? etc? */
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include standard headers */
@@ -150,7 +153,7 @@ typedef enum
 
 /*----------------------------------------------------------------------------*/
 /* Generic error printing macro */
-/* TODO: Create optional colored output */
+/* TODO: Create optional colored output using `prism.h` */
 #define _HINT_IND "       "
 #define _IND      "  "
 #define mc_PRINT(error,                                                        \
