@@ -12,6 +12,7 @@
   - [Summary](#summary)
   - [Predefined error types](#predefined-error-types)
   - [Public macros](#public-macros)
+  - [Public types](#public-types)
   - [Public functions](#public-functions)
 
 
@@ -199,6 +200,9 @@ typedef enum
     mc_StdCalloc,
     mc_StdRealloc,
 
+    /* Memory based errors */
+    mc_Memory,
+
     /* File I/O based errors */
     mc_EOF,
 
@@ -303,49 +307,77 @@ An error occured:
 First example
 -------------
 
-Let's take a look at practical usages of our error-handling solution through
-examples. For this we will "use" an imaginary 3rd-party library which also uses
+Let's take a look at our error-handling solution through practical examples.
+For this we will "use" an imaginary 3rd-party library which also uses
 `MeaCulpa`. The public type and all its methods from this library are the
 followings:
 
 ```C
+/*----------------------------------------------------------------------------*/
 /* Base type */
 typedef struct
 {
-    char *chars;
+    size_t size;
+    char  *chars;
 } RandChars;
 
+/*----------------------------------------------------------------------------*/
 /* Allocation and initialisation.
    Returns: mc_Okay, mc_Fail, mc_StdMalloc, mc_NullPtr */
 mc_Error
 RandChars_new(RandChars **const self,
               size_t            count);
-
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Try-function of the new method */
 mc_Error
 RandChars_new_TRY(mc_Error signal);
 
+/*----------------------------------------------------------------------------*/
 /* Generates random characters
-   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1 */
+   Returns: mc_Okay, mc_Fail, mc_NullPtr:0, mc_NullPtr:1, mc_Memory */
 mc_Error
 RandChars_gen(RandChars  *const self,
               char      **const buffer);
-
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Try-function of gen method */
 mc_Error
 RandChars_gen_TRY(mc_Error signal)
 
+/*----------------------------------------------------------------------------*/
+/* Reallocation if necessary.
+   Returns: mc_Okay, mc_Fail, mc_StdRealloc, mc_NullPtr */
+mc_Error
+RandChars_grow(RandChars *self,
+               size_t     size);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Try-function of grow method */
+mc_Error
+RandChars_grow_TRY(mc_Error signal);
+
+/*----------------------------------------------------------------------------*/
 /* Deallocation */
 void
 RandChars_del(RandChars **const self);
 ```
 
-Conventionally, this function can return `mc_Okay` indicating that there was no
-error; and `mc_Fail` which means an unhandled error happened during the call of
-this function. Besides the conventional return values, it can also return
-`mc_StdMalloc` which means, that the `malloc` function declared in `stdlib.h`
-returned a `NULL` pointer; and it can also return `mc_NullPtr` which means,
-that the first argument `self` is `NULL`.
+Conventionally all functions, which are returning `mc_Error` can and should
+return `mc_Okay` indicating that there was no error and `mc_Fail` which means an
+unhandled error happened during the call of the function. Besides the
+conventional error-types, let's see the different other errors that these
+functions can return.
+
+`mc_StdMalloc` is returned by `RandChars_new` when the `malloc` function
+declared in `stdlib.h` returned a `NULL` pointer.
+
+`mc_StdRealloc` is returned by `RandChars_grow` when the `realloc` function
+declared in `stdlib.h` returned a `NULL` pointer.
+
+`mc_NullPtr` is returned by `RandChars_new`, `RandChars_gen` and
+`RandChars_grow`, when their first argument `self` is `NULL`, or by
+`RandChars_gen`, when its second argument `buffer` is `NULL`.
+
+`mc_Memory` is returned by `RandChars_gen`, when the underlying buffer of a
+`RandChars` object has not enough size to store the generated `char`s.
 
 Here is our very simple example, of how we may want to use this function and
 its try-function:
@@ -363,6 +395,7 @@ its try-function:
     func  : RandChars_new
             RandChars_new_TRY
             RandChars_gen
+            RandChars_gen_TRY
             RandChars_del
 */
 
@@ -371,6 +404,7 @@ main(void)
 {
     /* Error object and error messages */
     mc_Error signal;
+    static const char *const function = "main";
     static const char *const messages[] =
     {
         "Cannot create new RandChars object",
@@ -383,7 +417,7 @@ main(void)
     if (mc_NOT_OKAY(signal))
     {
         RandChars_new_TRY(signal);
-        mc_print(mc_Okay, "main", 1, messages);
+        mc_print(mc_Okay, function, 1, messages);
         goto New_Error;
     }
 
@@ -393,7 +427,7 @@ main(void)
     if (mc_NOT_OKAY(signal))
     {
         RandChars_gen_TRY(signal);
-        mc_print(mc_Okay, "main", 1, messages + 1);
+        mc_print(mc_Okay, function, 1, messages + 1);
         goto Gen_Error;
     }
 
@@ -413,10 +447,10 @@ main(void)
 ```
 
 As you can see, here we were very strict, any error occures in `RandChars_new`
-(`mc_Fail`, `mc_StdMalloc` and `mc_NullPtr`) or in `RandChars_gen` (`mc_Fail`
-and `mc_NullPtr`) we want to interrupt our program. If the first argument of
-`RandChars_gen` was `NULL`, the above code would give us the following error
-messages:
+(`mc_Fail`, `mc_StdMalloc` and `mc_NullPtr`) or in `RandChars_gen` (`mc_Fail`,
+`mc_NullPtr` or `mc_Memory`) we want to interrupt our program. Therefore if the
+first argument of `RandChars_gen` was `NULL` for some reason, the above code
+would give us the following error messages and quits:
 
 ```
 An error occured:
@@ -451,6 +485,9 @@ one of them:
     func  : RandChars_new
             RandChars_new_TRY
             RandChars_gen
+            RandChars_gen_TRY
+            RandChars_grow
+            RandChars_grow_TRY
             RandChars_del
 */
 
@@ -459,39 +496,57 @@ main(void)
 {
     /* Error object and error messages */
     mc_Error signal;
+    static const char *const function = "main";
     static const char *const messages[] =
     {
         "Cannot create new RandChars object",
         "Cannot generate RandChars characters",
+        "Cannot increase size of character buffer",
     };
 
     /* Create RandChars object */
     RandChars *rc;
-    signal = RandChars_new(&rc, 5);
+    signal = RandChars_new(&rc, 0);
     if (mc_NOT_OKAY(signal))
     {
         RandChars_new_TRY(signal);
-        mc_print(mc_Okay, "main", 1, messages);
+        mc_print(mc_Okay, function, 1, messages);
         goto New_Error;
     }
 
     /* Generate random characters */
     char *s;
     signal = RandChars_gen(rc, &s);
-    if (mc_NOT_OKAY(signal))
-        switch (signal.error)
-        {
-            /* We chose to deal with only the NULL pointer argument problem,
-               so we assign a default value to our string */
-            case mc_NullPtr:
-                s = "abcde";
-                break;
+    switch (signal.error)
+    {
+        case mc_Okay:
+            break;
 
-            default:
-                mc_print(mc_Okay, "main", 1, messages + 1);
-                RandChars_new_TRY(signal);
+        /* We chose to deal with only the case, when there is not
+           enough memory in RandChars object, to generate chars */
+        case mc_Memory:
+            signal = RandChars_grow(rc, 5);
+            if (mc_NOT_OKAY(signal))
+            {
+                RandChars_grow_TRY(signal);
+                mc_print(mc_Okay, function, 1, messages + 2);
+                goto Grow_Error;
+            }
+
+            signal = RandChars_gen(rc, &s);
+            if (mc_NOT_OKAY(signal))
+            {
+                RandChars_gen_TRY(signal);
+                mc_print(mc_Okay, function, 1, messages + 1);
                 goto Gen_Error;
-        }
+            }
+            break;
+
+        default:
+            RandChars_gen_TRY(signal);
+            mc_print(mc_Okay, function, 1, messages + 1);
+            goto Gen_Error;
+    }
 
     /* If there was no error, print characters */
     printf("%s\n", s);
@@ -501,6 +556,7 @@ main(void)
     return EXIT_SUCCESS;
 
     /* If there was an error */
+    Grow_Error:
     Gen_Error:
     New_Error:
         RandChars_del(&rc);
@@ -989,6 +1045,17 @@ Public macros
       wrapper function (see `mc_print` for example)
     - PRINTER has to be a `char*` literal, `MIN_VALID` and `MAX_VALID` has to be
       `int`s, while `TYPE_NAMES` and `MESSAGES` has to be arrays of `char*`s
+
+
+
+Public types
+------------
+
+- `mc_ErrorType`
+
+- `mc_FnPtr`
+
+- `mc_Error`
 
 
 

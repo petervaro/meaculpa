@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.4.157 (20150605)                        ##
+##                       Version: 0.1.4.165 (20150606)                        ##
 ##                              File: SConstruct                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -125,8 +125,8 @@ environment_test_out = \
 
 # Define variables
 CPPDEFINES = {
-    'E1a': None,
-    # 'E1b': None,
+    # 'E1a': None,
+    'E1b': None,
     # 'E2' : None,
 }
 

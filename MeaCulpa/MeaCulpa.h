@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.158 (20150605)                        **
+**                       Version: 0.1.4.162 (20150606)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -31,6 +31,7 @@
 #ifndef __MEA_CULPA_H_701077389399616__
 #define __MEA_CULPA_H_701077389399616__
 
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include standard headers */
 #include <stddef.h> /*
     type  : size_t
@@ -40,9 +41,14 @@
     func  : fprintf
 */
 
+
+/*----------------------------------------------------------------------------*/
 /* Generic function pointer type */
 typedef void (*mc_FnPtr)(void);
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Error object */
 typedef struct
 {
@@ -51,15 +57,24 @@ typedef struct
     int      index; /* WHERE? The location of the error in the function */
 } mc_Error;
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Helper macros for casting owner and matching ownership */
 #define mc_OWNER(F) ((mc_FnPtr)&F)
 #define mc_IS_OWNER(F, E)  (mc_OWNER(F) == (E).owner)
 #define mc_NOT_OWNER(F, E) (mc_OWNER(F) != (E).owner)
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Helper macros to initialize error-object */
 #define mc_ERROR_VA(E, O, I, ...) {E, mc_OWNER(O), I}
 #define mc_ERROR(...)             mc_ERROR_VA(__VA_ARGS__, 0, 0)
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Predefined error types */
 typedef enum
 {
@@ -81,6 +96,10 @@ typedef enum
     mc_StdCalloc,
     /* Memory reallocation failed */
     mc_StdRealloc,
+
+    /* Memory based error */
+    /* There is not enough memory */
+    mc_Memory,
 
     /* File I/O based errors */
     /* End-Of-File error */
@@ -110,6 +129,9 @@ typedef enum
     mc__Invalid__
 } mc_ErrorType;
 
+
+
+/*----------------------------------------------------------------------------*/
 /* TODO: make convenient macros for all mc_ErrorTypes */
 /* Helper macros to initialize convenient error-objects */
 #define mc_OKAY_VA(O, I, ...) mc_ERROR(mc_Okay, O, I)
@@ -117,14 +139,20 @@ typedef enum
 #define mc_FAIL_VA(O, I, ...) mc_ERROR(mc_Fail, O, I)
 #define mc_FAIL(...)          mc_FAIL_VA(__VA_ARGS__, 0, 0)
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Helper macros to check if there was an error */
 #define mc_IS_OKAY(E)  ((E).error == mc_Okay)
 #define mc_NOT_OKAY(E) ((E).error != mc_Okay)
 
+
+
+/*----------------------------------------------------------------------------*/
+/* Generic error printing macro */
+/* TODO: Create optional colored output */
 #define _HINT_IND "       "
 #define _IND      "  "
-
-/* Generic error printing macro */
 #define mc_PRINT(error,                                                        \
                  function,                                                     \
                  line_count,                                                   \
@@ -182,6 +210,9 @@ typedef enum
     }                                                                          \
     while (0)
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Print function */
 void
 mc_print(const mc_ErrorType       error,

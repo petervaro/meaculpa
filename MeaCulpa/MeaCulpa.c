@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.4.158 (20150605)                        **
+**                       Version: 0.1.4.162 (20150606)                        **
 **                         File: MeaCulpa/MeaCulpa.c                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -27,13 +27,24 @@
 **                                                                            **
 ************************************************************************ INFO */
 
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include standard headers */
+#include <stddef.h> /*
+    type  : size_t
+*/
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include MeaCulpa headers */
 #include "MeaCulpa.h" /*
+    type  : mc_ErrorType
     const : mc_Okay
             mc_Fail
             mc_Depricated
             mc_Experimental
+            mc_StdMalloc
+            mc_StdCalloc
+            mc_StdRealloc
+            mc_Memory
             mc_EOF
             mc_ZeroDiv
             mc_NullPtr
@@ -45,6 +56,8 @@
     macro : mc_PRINT
 */
 
+
+/*----------------------------------------------------------------------------*/
 /* Error type names */
 static const char *const ERROR_TYPE_NAMES[] =
 {
@@ -55,6 +68,7 @@ static const char *const ERROR_TYPE_NAMES[] =
     [mc_StdMalloc]    = "mc_StdMalloc",
     [mc_StdCalloc]    = "mc_StdCalloc",
     [mc_StdRealloc]   = "mc_StdRealloc",
+    [mc_Memory]       = "mc_Memory",
     [mc_EOF]          = "mc_EOF",
     [mc_ZeroDiv]      = "mc_ZeroDiv",
     [mc_NullPtr]      = "mc_NullPtr",
@@ -64,6 +78,9 @@ static const char *const ERROR_TYPE_NAMES[] =
     [mc_Key]          = "mc_Key",
 };
 
+
+
+/*----------------------------------------------------------------------------*/
 /* Predefined error messages */
 static const char *const ERROR_MESSAGES[] =
 {
@@ -74,6 +91,7 @@ static const char *const ERROR_MESSAGES[] =
     [mc_StdMalloc]    = "Memory allocation failed",
     [mc_StdCalloc]    = "Clear memory allocation failed",
     [mc_StdRealloc]   = "Memory reallocation failed",
+    [mc_Memory]       = "Not enough memory",
     [mc_EOF]          = "End of File",
     [mc_ZeroDiv]      = "Division by 0",
     [mc_NullPtr]      = "Argument is a pointer to NULL",
@@ -83,8 +101,9 @@ static const char *const ERROR_MESSAGES[] =
     [mc_Key]          = "Key not found",
 };
 
-/* TODO: Create optional colored output */
 
+
+/*----------------------------------------------------------------------------*/
 /* Print function */
 void
 mc_print(const mc_ErrorType       error,
