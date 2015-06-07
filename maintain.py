@@ -5,7 +5,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.6.181 (20150606)                        ##
+##                       Version: 0.1.7.210 (20150607)                        ##
 ##                             File: maintain.py                              ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -47,6 +47,7 @@ try:
     exclude = deepcopy(cutils.ccom.EXCLUDE)
     exclude['folders'].append('build')
     exclude['folders'].append('dist')
+    exclude['folders'].append('rainicorn')
 
     ccom_include = deepcopy(cutils.ccom.INCLUDE)
     ccom_include['extensions'].extend(web_dev)

@@ -4,7 +4,7 @@
 ##                                  ========                                  ##
 ##                                                                            ##
 ##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.6.190 (20150606)                        ##
+##                       Version: 0.1.7.212 (20150607)                        ##
 ##                                 File: TODO                                 ##
 ##                                                                            ##
 ##               For more information about the project, visit                ##
@@ -27,7 +27,7 @@
 ##                                                                            ##
 ######################################################################## INFO ##
 
-#----------------------------- 5 POSTS IN 2 FILES -----------------------------#
+#----------------------------- 4 POSTS IN 2 FILES -----------------------------#
 TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 1
@@ -55,15 +55,8 @@ TODO:
   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
   # 4
   - file: MeaCulpa/MeaCulpa.h
-    line: 138
+    line: 150
     note: |
           make convenient macros for all mc_ErrorTypes 
-
-  #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-  # 5
-  - file: MeaCulpa/MeaCulpa.h
-    line: 156
-    note: |
-          Create optional colored output using `prism.h` 
 
 

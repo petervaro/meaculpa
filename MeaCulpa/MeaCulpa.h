@@ -4,7 +4,7 @@
 **                                  ========                                  **
 **                                                                            **
 **      Sophisticated, minimalistic and high-level error handling for C       **
-**                       Version: 0.1.6.185 (20150606)                        **
+**                       Version: 0.1.7.210 (20150607)                        **
 **                         File: MeaCulpa/MeaCulpa.h                          **
 **                                                                            **
 **               For more information about the project, visit                **
@@ -42,6 +42,18 @@
 #include <stdio.h> /*
     const : stderr
     func  : fprintf
+*/
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Include rainicorn headers */
+#include "rainicorn/rainicorn.h" /*
+    macro : rc_F
+            rc_FS
+            rc_RESET
+            rc_BOLD
+            rc_RED
+            rc_WHITE
+            rc_YELLOW
 */
 
 
@@ -153,7 +165,6 @@ typedef enum
 
 /*----------------------------------------------------------------------------*/
 /* Generic error printing macro */
-/* TODO: Create optional colored output using `prism.h` */
 #define _HINT_IND "       "
 #define _IND      "  "
 #define mc_PRINT(error,                                                        \
@@ -170,37 +181,51 @@ typedef enum
         /* If print is not part of a trace-chain */                            \
         if (error != mc_Okay)                                                  \
             /* Start error */                                                  \
-            fprintf(stderr, "\nAn error occured:\n");                          \
+            fprintf(stderr, rc_FS(rc_WHITE, rc_BOLD, "\nAn error occured:")    \
+                            rc_RESET("\n"));                                   \
         /* If `function` argument is invalid */                                \
         if (!function)                                                         \
         {                                                                      \
-            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
-                            _IND _IND "Cannot print function name\n"           \
+            fprintf(stderr, _IND rc_F(rc_WHITE, "In function: ")               \
+                            rc_FS(rc_YELLOW, rc_BOLD, PRINTER "\n")            \
+                            _IND _IND rc_F(rc_RED, "Internal")                 \
+                            rc_F(rc_WHITE, ": Cannot print function name")     \
+                            rc_RESET("\n")                                     \
                             _IND _IND "(Hint: The 2nd argument 'function' "    \
                                           "is pointing to NULL)\n");           \
             return;                                                            \
         }                                                                      \
         /* Print function name */                                              \
-        fprintf(stderr, _IND "In function: %s\n", function);                   \
+        fprintf(stderr, _IND rc_F(rc_WHITE, "In function: ")                   \
+                             rc_FS(rc_YELLOW, rc_BOLD, "%s") rc_RESET("\n"),   \
+                             function);                                        \
         /* If `error` argument is invalid */                                   \
         if (error <  MIN_VALID ||                                              \
             error >= MAX_VALID)                                                \
         {                                                                      \
-            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
-                            _IND _IND "Cannot print predefined error message\n"\
+            fprintf(stderr, _IND rc_F(rc_WHITE, "In function: ")               \
+                            rc_FS(rc_YELLOW, rc_BOLD, PRINTER "\n")            \
+                            _IND _IND rc_F(rc_RED, "Internal")                 \
+                            rc_F(rc_WHITE, ": Cannot print predefined"         \
+                                           " error message") rc_RESET("\n")    \
                             _IND _IND "(Hint: The 1st argument "               \
-                            "`error`is not an `mc_ErrorType`)\n");             \
+                            "`error` is not an `mc_ErrorType`)\n");            \
             return;                                                            \
         }                                                                      \
         if (error != mc_Okay)                                                  \
             /* Print predefined messages */                                    \
-            fprintf(stderr, _IND _IND "%s: %s\n", TYPE_NAMES[error],           \
-                                                      MESSAGES[error]);        \
+            fprintf(stderr, _IND _IND rc_FS(rc_RED, rc_BOLD, "%s")             \
+                                      rc_F(rc_WHITE, ": %s") rc_RESET("\n"),   \
+                                      TYPE_NAMES[error],                       \
+                                      MESSAGES[error]);                        \
         /* If `lines` argument is invalid */                                   \
         if (!lines && line_count)                                              \
         {                                                                      \
-            fprintf(stderr, _IND "In function: " PRINTER "\n"                  \
-                            _IND _IND "Cannot print user defined message\n"    \
+            fprintf(stderr, _IND rc_F(rc_WHITE, "In function: ")               \
+                            rc_FS(rc_YELLOW, rc_BOLD, PRINTER "\n")            \
+                            _IND _IND rc_F(rc_RED, "Internal")                 \
+                            rc_F(rc_WHITE, ": Cannot print user "              \
+                                           "defined message") rc_RESET("\n")   \
                             _IND _IND "(Hint: 4th argument 'lines' "           \
                                           "is pointing to NULL)\n");           \
             return;                                                            \
