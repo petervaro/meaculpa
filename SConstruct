@@ -1,210 +1,165 @@
-## INFO ########################################################################
-##                                                                            ##
-##                                  MeaCulpa                                  ##
-##                                  ========                                  ##
-##                                                                            ##
-##      Sophisticated, minimalistic and high-level error handling for C       ##
-##                       Version: 0.1.6.181 (20150606)                        ##
-##                              File: SConstruct                              ##
-##                                                                            ##
-##               For more information about the project, visit                ##
-##                  <https://github.com/petervaro/MeaCulpa>.                  ##
-##                       Copyright (C) 2015 Peter Varo                        ##
-##                                                                            ##
-##  This program is free software: you can redistribute it and/or modify it   ##
-##   under the terms of the GNU General Public License as published by the    ##
-##       Free Software Foundation, either version 3 of the License, or        ##
-##                    (at your option) any later version.                     ##
-##                                                                            ##
-##    This program is distributed in the hope that it will be useful, but     ##
-##         WITHOUT ANY WARRANTY; without even the implied warranty of         ##
-##            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.            ##
-##            See the GNU General Public License for more details.            ##
-##                                                                            ##
-##     You should have received a copy of the GNU General Public License      ##
-##     along with this program, most likely a file in the root directory,     ##
-##        called 'LICENSE'. If not, see <http://www.gnu.org/licenses>.        ##
-##                                                                            ##
-######################################################################## INFO ##
+## INFO ##
+## INFO ##
+
+# Indicate the beginning of building
+print '{:#^80}'.format(' SCONS BUILD ')
 
 # Import python modules
-from os.path import join
-from shutil  import copy
-from sys     import platform
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Basic settings
-debug      = False
-input_dir  = 'MeaCulpa'
-build_dir  = 'build'
-output_dir = 'dist'
-output_lib = 'MeaCulpa'
-input_src  = ['MeaCulpa.c']
+from os.path   import join
+from itertools import chain
+from copy      import deepcopy
 
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Indicate the beginning of building
-print '\n{:#^80}\n'.format(' SCONS BUILD ')
+#------------------------------------------------------------------------------#
+# If developer mode passed ($ scons devel=yes)
+DEVEL = ARGUMENTS.get('devel', False)
 
-# C Compiler (gcc|clang)
-CC = 'clang'
 
-# C Compiler Flags
+
+# Set global variables
+#------------------------------------------------------------------------------#
+# C compiler
+CC = ARGUMENTS.get('cc', 'clang')
+
+# C compiler (generic) flags
 CCFLAGS = ['v',
+           'g',
            'O3',
            'Wall',
            'Wextra',
-           'pedantic',
-           'std=c11',
-           'g' if debug else '']
+           'Wpedantic',
+           'std=c11',]
 
-# GCC Specific Compiler Flags
+# GCC specific c compiler flags
 GCCFLAGS = ['fdiagnostics-color=always']
+GCCFLAGS_DEVEL = []
 
-# CLANG Specific Compiler Flags
+# CLANG specific  compiler flags
 CLANGFLAGS = ['fcolor-diagnostics',
               'fmacro-backtrace-limit=0']
-
-# Add compiler specific flags
-CCFLAGS.extend(GCCFLAGS if CC == 'gcc' else CLANGFLAGS if CC == 'clang' else [])
-
-# C Pre-Processor Path (Include)
-CPPPATH = ['MeaCulpa',
-           '/usr/include',
-           '/usr/local/include']
-
-# Library paths
-LIBPATH = ['/usr/lib',
-           '/usr/local/lib']
+CLANGFLAGS_DEVEL = ['Weverything']
 
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# MAINTENANCE
-maintain_run = Environment().Command(target='maintain',
-                                     source=None,
-                                     action='python3 maintain.py')
+
+# Set flags based on the above variables
+#------------------------------------------------------------------------------#
+if CC.startswith('clang'):
+    if DEVEL:
+        CLANGFLAGS.extend(CLANGFLAGS_DEVEL)
+    flags = CLANGFLAGS
+elif CC.startswith('gcc'):
+    if DEVEL:
+        GCCFLAGS.extend(GCCFLAGS_DEVEL)
+    flags = GCCFLAGS
+else:
+    raise ValueError('CC is not supported: {}'.format(CC))
+
+# Finalize flags
+CCFLAGS = ['-' + flag for flag in chain(CCFLAGS, flags)]
 
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# CONTAINER LIBRARY
+# Helper functions
+#------------------------------------------------------------------------------#
+def path_prefixer(folder, files):
+    return [join(folder, file) for file in files]
 
-# Create environment
-environment = \
-    Environment(CC=CC,
-                CCFLAGS=['-' + flag for flag in CCFLAGS if flag],
-                CPPPATH=CPPPATH,
-                LIBPATH=LIBPATH)
-# Specify output directory
-environment.VariantDir(variant_dir=build_dir,
-                       src_dir=input_dir)
-# Create library
-environment_to_lib = \
-    environment.SharedLibrary(target=join(output_dir, output_lib),
-                              source=[join(build_dir, f) for f in input_src])
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# TESTS
 
-# Create environment
-environment_test = \
-    Environment(CC=CC,
-                CCFLAGS=['-' + flag for flag in CCFLAGS if flag],
-                CPPPATH=CPPPATH,
-                LIBPATH=LIBPATH,
-                LIBS=[output_lib])
-# Specify output directory
-environment_test.VariantDir(variant_dir=build_dir,
-                            src_dir=input_dir)
-# Create program
-environment_test_out = \
-    environment_test.Program(target=join(output_dir, 'test'),
-                             source=[join(build_dir, 'test.c')])
+# Target: building different versions of meaculpa
+#------------------------------------------------------------------------------#
+def meaculpa(version=''):
+    # Output and inputs
+    INPUT_DIR  = '.'
+    OUTPUT_DIR = join('build', version)
+    TARGET     = join('libs', 'meaculpa')
+    SOURCE     = [join('src', 'error.c'),
+                  join('src', 'panic.c'),]
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# DOC
+    # C pre-processor path (include)
+    CPPPATH = [join(INPUT_DIR, 'include')]
+    # Library path
+    LIBPATH = ['/usr/lib',
+               '/usr/local/lib']
+    # Libraries
+    LIBS    = []
 
-# Define variables
-# TODO: catch `scons doc E(1|2|3)` => and add the last arg to CPPDEFINES
-CPPDEFINES = {
-    # 'E1': None,
-    # 'E2': None,
-    'E3': None,
-}
+    # Define version
+    ccflags = deepcopy(CCFLAGS)
+    ccflags.append(('-DMC_' + version.upper()) if version else '')
 
-# Create environment
-environment_doc = \
-    Environment(CC=CC,
-                CCFLAGS=['-' + flag for flag in CCFLAGS if flag],
-                CPPPATH=CPPPATH,
-                CPPDEFINES=CPPDEFINES,
-                LIBPATH=LIBPATH,
-                LIBS=[output_lib])
-# Specify output directory
-environment_doc.VariantDir(variant_dir=build_dir,
-                           src_dir=input_dir)
-# Create program
-environment_doc_out = \
-    environment_doc.Program(target=join(output_dir, 'doc'),
-                            source=[join(build_dir, 'doc.c')])
+    # Add suffix
+    TARGET += ('_' + version) if version else ''
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# INSTALLATION
-def install(*args, **kwargs):
-    if platform in ('linux', 'linux2'):
-        copy(join(input_dir,  'MeaCulpa.h'),
-             join(CPPPATH[2], 'MeaCulpa.h'))
-        copy(join(output_dir, 'lib' + output_lib + '.so'),
-             join(LIBPATH[1], 'lib' + output_lib + '.so'))
-        print "MeaCulpa has been installed"
-    elif platform == 'darwin':
-        copy(join(input_dir,  'MeaCulpa.h'),
-             join(CPPPATH[2], 'MeaCulpa.h'))
-        copy(join(output_dir, 'lib' + output_lib + '.dylib'),
-             join(LIBPATH[1], 'lib' + output_lib + '.dylib'))
-        print "MeaCulpa has been installed"
-    elif platform == 'win32':
-        print "Installation of MeaCulpa is not supported yet"
-    else:
-        print "Installation of MeaCulpa is not supported yet"
+    # Create environment
+    environment = Environment(CC      = CC,
+                              CCFLAGS = ccflags,
+                              CPPPATH = CPPPATH,
+                              LIBPATH = LIBPATH,
+                              LIBS    = LIBS)
 
-environment_install = Environment().Command(target='install',
-                                            source=None,
-                                            action=install)
+    # Specify output directory
+    environment.VariantDir(variant_dir = OUTPUT_DIR,
+                           src_dir     = INPUT_DIR)
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# RUN TESTS
+    # Build
+    build = environment.SharedLibrary(target = TARGET,
+                                      source = path_prefixer(OUTPUT_DIR,
+                                                             SOURCE))
 
-# Create environment
-environment_tests = Environment()
-environment_tests_run = environment_tests.Command(target='tests',
-                                                  source=None,
-                                                  action='./' + join(output_dir, 'test'))
+    # Name this build
+    environment.Alias('meaculpa', build)
+    Default(build)
+    return build
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# RUN DOC
 
-# Create environment
-environment_docs = Environment()
-environment_docs_run = environment_docs.Command(target='doc',
-                                                source=None,
-                                                action='./' + join(output_dir, 'doc'))
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# TODO: Rename environments to have meaningful names, because right now,
-#       this is a huge, stinky mess :/
+# Target: building sample files
+#------------------------------------------------------------------------------#
+def samples():
+    # Output and inputs
+    INPUT_DIR  = 'samples'
+    OUTPUT_DIR = join('build', 'samples')
+    TARGET     = join('bins', 'sample')
+    SOURCE     = ['example01.c']
 
-# Before creating lib, run maintain script
-environment.Depends(environment_to_lib, maintain_run)
-# Before install, create lib
-environment.Depends(environment_install, environment_to_lib)
-# Before compiling tests, install lib
-environment_test.Depends(environment_test_out, environment_install)
-# Before running tests, compile them
-environment_tests.Depends(environment_tests_run, environment_test_out)
-# Before compiling doc, install lib
-environment_doc.Depends(environment_doc_out, environment_install)
-# Before running docs, compile them
-environment_docs.Depends(environment_docs_run, environment_doc_out)
+    # C pre-processor path (include)
+    CPPPATH = ['/usr/include',
+               '/usr/local/include']
+    # Library path
+    LIBPATH = ['/usr/lib',
+               '/usr/local/lib']
+    # Libraries
+    LIBS    = ['meaculpa_safe']
 
-# Set default target
-Default(environment_to_lib)
+    # Define version
+    ccflags = deepcopy(CCFLAGS)
+    ccflags.append('-DMC_SAFE')
+
+    # Create environment
+    environment = Environment(CC      = CC,
+                              CCFLAGS = ccflags,
+                              CPPPATH = CPPPATH,
+                              LIBPATH = LIBPATH,
+                              LIBS    = LIBS)
+
+    # Specify output directory
+    environment.VariantDir(variant_dir = OUTPUT_DIR,
+                           src_dir     = INPUT_DIR)
+
+    # Build
+    build = environment.Program(target = TARGET,
+                                source = path_prefixer(OUTPUT_DIR,
+                                                       SOURCE))
+
+    # Name this build
+    environment.Alias('samples', build)
+    return build
+
+
+
+#------------------------------------------------------------------------------#
+# Create build options
+# meaculpa()
+# meaculpa('fast')
+# Depends(samples(), meaculpa('safe'))
+samples()

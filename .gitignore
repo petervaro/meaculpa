@@ -7,14 +7,8 @@
 
 .sconsign.dblite
 
-.ccom_cache
-.clic_cache
-.cdoc_cache
-
-.ccom_todo
-.cdoc_toc
-
-dist
+bins
+libs
 build
 
 README.html
