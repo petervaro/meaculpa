@@ -81,7 +81,7 @@ def meaculpa(version=''):
     LIBPATH = ['/usr/lib',
                '/usr/local/lib']
     # Libraries
-    LIBS    = []
+    LIBS    = ['jemalloc']
 
     # Define version
     ccflags = deepcopy(CCFLAGS)
@@ -159,7 +159,7 @@ def samples():
 
 #------------------------------------------------------------------------------#
 # Create build options
-# meaculpa()
-# meaculpa('fast')
-# Depends(samples(), meaculpa('safe'))
-samples()
+meaculpa()
+meaculpa('fast')
+Depends(samples(), meaculpa('safe'))
+# samples()

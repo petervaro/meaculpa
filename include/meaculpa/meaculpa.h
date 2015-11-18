@@ -73,11 +73,11 @@
 
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_put(P, M) \
-    mc_Panic_ffput(P, (const char *(*)(int))mc_Error_str, M, stderr)
+#define mc_Panic_put(P, O, M) \
+    mc_Panic_ffput(P, O, #O, (const char *(*)(int))mc_Error_str, M, stderr)
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_fput(P, M, S) \
-    mc_Panic_ffput(P, (const char *(*)(int))mc_Error_str, M, S)
+#define mc_Panic_fput(P, O, M, S) \
+    mc_Panic_ffput(P, O, #O, (const char *(*)(int))mc_Error_str, M, S)
 
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

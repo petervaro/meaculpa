@@ -28,10 +28,8 @@ typedef void (*mc_PanicFunc)(void);
 
 
 /*----------------------------------------------------------------------------*/
-#define FUNC_NAME (size_t)1024
 typedef struct
 {
-    const char owner_str[FUNC_NAME];
     mc_PanicFunc owner;
     union
     {
@@ -40,28 +38,52 @@ typedef struct
     };
     enum
     {
+        mc_Panic_NONE = -1,
         mc_Panic_DATA,
         mc_Panic_FUNC,
     } type;
     int  error;
 } mc_Panic;
-#undef FUNC_NAME
 
 
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic__new_data(mc_Panic     **const self,
+                   mc_PanicFunc         owner,
+                   int                  error,
+                   mc_PanicData         pointer);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic__new_func(mc_Panic     **const self,
+                   mc_PanicFunc         owner,
+                   int                  error,
+                   mc_PanicFunc         pointer);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic_new_copy(mc_Panic  *const self,
+                  mc_Panic **const panic);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 mc_Error
 mc_Panic__ini_data(mc_Panic     *const self,
                    mc_PanicFunc        owner,
-                   const char   *const owner_str,
                    int                 error,
-                   mc_PanicData        data);
+                   mc_PanicData        pointer);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 mc_Error
 mc_Panic__ini_func(mc_Panic     *const self,
                    mc_PanicFunc        owner,
-                   const char   *const owner_str,
                    int                 error,
-                   mc_PanicFunc        func);
+                   mc_PanicFunc        pointer);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic_ini_copy(mc_Panic *const self,
+                  mc_Panic *const panic);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic_fin(mc_Panic *const self);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+mc_Error
+mc_Panic_del(mc_Panic **const self);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 mc_Error
 mc_Panic_get_error(mc_Panic *const self);
@@ -86,17 +108,19 @@ mc_Panic_get_data(mc_Panic *const self);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void
 mc_Panic__set_data(mc_Panic     *const self,
-                   mc_PanicData        data);
+                   mc_PanicData        pointer);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 mc_PanicFunc
 mc_Panic_get_func(mc_Panic *const self);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void
 mc_Panic__set_func(mc_Panic     *const self,
-                   mc_PanicFunc        func);
+                   mc_PanicFunc        pointer);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void
 mc_Panic_ffput(mc_Panic     *const self,
+               mc_PanicFunc        owner,
+               const char   *const location,
                const char *(*const err_str)(int),
                const char   *const message,
                FILE         *const stream);

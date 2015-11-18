@@ -14,7 +14,7 @@
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include meaculpa headers */
 #include <meaculpa/meaculpa.h>
-/*  type  : mc_Error
+/*  type  : mc_Error'/
             mc_Panic
     const : mc_Error_OKAY
             mc_Error_ARG_IS_NULL
@@ -47,7 +47,7 @@ tail_panic(mc_Panic *const panic)
     if (!mc_Panic_owned_by(panic, tail))
         return false;
 
-    mc_Panic_put(panic, (const char *const)mc_Panic_get_data(panic));
+    mc_Panic_put(panic, tail, (const char *const)mc_Panic_get_data(panic));
     return true;
 }
 
@@ -59,10 +59,11 @@ body(void     *const self,
      double          value2,
      mc_Panic *const panic)
 {
-    static const char *const ERR_FUNC = "'body' function is deprecated, "
-                                        "use 'soul' function instead";
-
-    // Do the job..
+    static const char *const ERR_FUNC = "the function 'body' is "
+                                        "deprecated, use 'soul' instead",
+    void *p;
+    if (tail(p, self, panic))
+        return mc_Panic_get_error(panic);
 
     return mc_Panic_ini_data(panic, body, mc_Error_DEPRECATED, ERR_FUNC);
 }
@@ -70,6 +71,15 @@ body(void     *const self,
 static bool
 body_panic(mc_Panic *const panic)
 {
+    if (tail_panic(panic))
+    {
+        mc_Panic_put(panic, body);
+        return true;
+    }
+    if (!mc_Panic_owned_by(panic, body))
+        return false;
+
+    mc_Panic_put(panic, body, (const char *const)mc_Panic_get_data(panic));
     return true;
 }
 
@@ -99,6 +109,15 @@ head(void     *const self,
 static bool
 head_panic(mc_Panic *const panic)
 {
+    if (body_panic(panic))
+    {
+        mc_Panic_put(panic, head);
+        return true;
+    }
+    if (!mc_Panic_owned_by(panic, head))
+        return false;
+
+    mc_Panic_put(panic, head, (const char *const)mc_Panic_get_data(panic));
     return true;
 }
 
@@ -126,5 +145,7 @@ main(void)
         mc_Panic_put(&panic, (const char *const)mc_Panic_get_data(&panic));
         return EXIT_FAILURE;
     }
+    mc_Panic_fin(&panic);
     return EXIT_SUCCESS;
 }
+/
