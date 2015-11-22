@@ -1,14 +1,19 @@
+# Extensions
 *.DS_Store
 *.pyc
 *.pyo
 *.sublime-workspace
 *.sublime-project
 *.so
+*.o
 
-.sconsign.dblite
-
-bins
-libs
+# Folders
+bin
+lib
 build
 
+# Hidden folders
+.tup
+
+# Files
 README.html

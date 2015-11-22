@@ -20,6 +20,15 @@
             free*/
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Include rainicorn headers */
+#include <rainicorn/rainicorn.h>
+/*  macro : RC_RED
+            RC_BOLD
+            RC_S
+            RC_F
+            RC_XFBS */
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include meaculpa headers */
 #include "meaculpa/error.h"
 /*  type  : mc_Error
@@ -167,13 +176,13 @@ mc_Panic__ini_data(mc_Panic     *const self,
             self->owner        = owner;
             self->type         = mc_Panic_DATA;
             self->data         = pointer;
-            return self->error = error;
+            return (mc_Error)(self->error = error);
 
     /* If SAFE mode is defined */
     #ifdef MC_SAFE
         }
         /* If self is NULL, return passed error */
-        return error;
+        return (mc_Error)error;
     #endif
 }
 
@@ -195,13 +204,13 @@ mc_Panic__ini_func(mc_Panic     *const self,
             self->owner        = owner;
             self->type         = mc_Panic_FUNC;
             self->func         = pointer;
-            return self->error = error;
+            return (mc_Error)(self->error = error);
 
     /* If SAFE mode is defined */
     #ifdef MC_SAFE
         }
         /* If self is NULL, return passed error */
-        return error;
+        return (mc_Error)error;
     #endif
 }
 
@@ -237,7 +246,7 @@ mc_Panic_ini_copy(mc_Panic *const self,
             return mc_Error_INVALID_VALUE;
     }
     /* Return stored error */
-    return panic->error = self->error;
+    return (mc_Error)(panic->error = self->error);
 }
 
 
@@ -355,7 +364,7 @@ mc_Panic_get_error(mc_Panic *const self)
     #endif
 
     /* Return stored error */
-    return self->error;
+    return (mc_Error)(self->error);
 }
 
 
@@ -370,12 +379,12 @@ mc_Panic_set_error(mc_Panic *const self,
         if (self)
     #endif
             /* Return passed and stored error */
-            return self->error = error;
+            return (mc_Error)(self->error = error);
 
     /* If SAFE mode is defined */
     #ifdef MC_SAFE
         /* Return passed error */
-        return error;
+        return (mc_Error)error;
     #endif
 }
 
@@ -472,8 +481,9 @@ mc_Panic_ffput(mc_Panic     *const self,
         /* If self is NULL */
         if (!self)
         {
-            fputs("An error occured: mc_Error_ARG_IS_NULL\n"
-                  "In function: mc_Panic_put\n"
+            fputs(RC_S(RC_BOLD, "An error occured: ")
+                  RC_F(RC_RED, "mc_Error_ARG_IS_NULL\n")
+                  RC_XFBS("In function: mc_Panic_put\n")
                   "1st argument is NULL: mc_Panic *const self\n", stream);
             return;
         }
@@ -486,9 +496,10 @@ mc_Panic_ffput(mc_Panic     *const self,
     /* If this is where the error occured */
     if (self->owner == owner)
     {
-        fputs("An error occured: ", stream);
+        fputs(RC_S(RC_BOLD, "An error occured: ")
+              RC_F(RC_RED, ""), stream);
         fputs(err_str(self->error), stream);
-        fputs("\n", stream);
+        fputs(RC_XFBS("\n"), stream);
     }
 
     /* If function is not NULL */

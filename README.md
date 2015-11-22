@@ -1,4 +1,4 @@
-![MeaCulpa](logo.png?raw=true "logo")
+![MeaCulpa](img/logo.png?raw=true "logo")
 
 - [What is `MeaCulpa`?](#what-is-meaculpa)
 - [Why another solution?](#why-another-solution)

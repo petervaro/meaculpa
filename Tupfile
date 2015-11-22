@@ -1,0 +1,67 @@
+## INFO ##
+## INFO ##
+
+# Include Tuprules.tup
+include_rules
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+CPPPATH += -Iinclude
+lib = libmeaculpa
+
+
+#------------------------------------------------------------------------------#
+# Build shared library: BASE version
+: foreach $(SOURCE_DIR)/*.c                                                    \
+    |> !to_obj $(CPPPATH)                                                      \
+    |> $(BUILD_DIR)/base/%B.o {base}
+: {base}                                                                       \
+    |> !to_lib  -ljemalloc                                                     \
+    |> $(LIBRARY_DIR)/$(lib).base.so {base_lib}
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Build shared library: SAFE version
+: foreach $(SOURCE_DIR)/*.c                                                    \
+    |> !to_obj $(CPPPATH) -DMC_SAFE                                            \
+    |> $(BUILD_DIR)/safe/%B.o {safe}
+: {safe}                                                                       \
+    |> !to_lib -ljemalloc                                                      \
+    |> $(LIBRARY_DIR)/$(lib).safe.so {safe_lib}
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Build shared library: FAST version
+: foreach $(SOURCE_DIR)/*.c                                                    \
+    |> !to_obj $(CPPPATH) -DMC_FAST                                            \
+    |> $(BUILD_DIR)/fast/%B.o {fast}
+: {fast}                                                                       \
+    |> !to_lib -ljemalloc                                                      \
+    |> $(LIBRARY_DIR)/$(lib).fast.so {fast_lib}
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Create symbolic link to default library (SAFE)
+: {safe_lib}                                                                   \
+    |> ^ LNK: symbolic linking^ ln -s $(lib).safe.so %o                        \
+    |> $(LIBRARY_DIR)/$(lib).so
+
+
+#------------------------------------------------------------------------------#
+# Build static library: BASE version
+: {base} |> !to_arc |> $(LIBRARY_DIR)/$(lib).base.a
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Build static library: SAFE version
+: {safe} |> !to_arc |> $(LIBRARY_DIR)/$(lib).safe.a
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Build static library: FAST version
+: {fast} |> !to_arc |> $(LIBRARY_DIR)/$(lib).fast.a
+
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Create symbolic link to default library (SAFE)
+: {safe_lib}                                                                   \
+    |> ^ LNK: symbolic linking^ ln -s $(lib).safe.a %o                         \
+    |> $(LIBRARY_DIR)/$(lib).a
+
+
+#------------------------------------------------------------------------------#
+# Build tests
+run python rules.py samples example safe
