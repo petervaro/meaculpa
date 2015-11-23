@@ -34,8 +34,9 @@ typedef enum
     mc_Error_FIN_FAIL,
 
     /* File I/O specific errors */
-    mc_Error_PERMISSION_FAIL,
+    mc_Error_FILE_ACCESS,
     mc_Error_FILE_NOT_FOUND,
+    mc_Error_PERMISSION_FAIL,
     mc_Error_END_OF_LINE,
     mc_Error_END_OF_FILE,
 

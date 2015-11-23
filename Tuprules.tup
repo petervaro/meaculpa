@@ -36,6 +36,8 @@ WARN += -Wpedantic
 ifdef DEVEL
     ifeq ($(CC_NAME),clang)
         WARN += -Weverything
+        # Default label in switch which covers all enumeration values
+        WARN += -Wno-covered-switch-default
     else
         ifeq ($(CC_NAME),gcc)
             WARN += -Wpadded

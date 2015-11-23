@@ -23,7 +23,7 @@
 
 /*----------------------------------------------------------------------------*/
 /* Helper types */
-typedef void  *mc_PanicData;
+typedef const void  *mc_PanicData;
 typedef void (*mc_PanicFunc)(void);
 
 

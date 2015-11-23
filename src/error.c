@@ -19,8 +19,9 @@
             mc_Error_ALLOC_FAIL
             mc_Error_INI_FAIL
             mc_Error_FIN_FAIL
-            mc_Error_PERMISSION_FAIL
+            mc_Error_FILE_ACCESS
             mc_Error_FILE_NOT_FOUND
+            mc_Error_PERMISSION_FAIL
             mc_Error_END_OF_LINE
             mc_Error_END_OF_FILE
             mc_Error_ZERO_DIVISION
@@ -44,8 +45,9 @@ static const char *const ERRORS[] =
     [mc_Error_ALLOC_FAIL]      = "mc_Error_ALLOC_FAIL",
     [mc_Error_INI_FAIL]        = "mc_Error_INI_FAIL",
     [mc_Error_FIN_FAIL]        = "mc_Error_FIN_FAIL",
-    [mc_Error_PERMISSION_FAIL] = "mc_Error_PERMISSION_FAIL",
+    [mc_Error_FILE_ACCESS]     = "mc_Error_FILE_ACCESS",
     [mc_Error_FILE_NOT_FOUND]  = "mc_Error_FILE_NOT_FOUND",
+    [mc_Error_PERMISSION_FAIL] = "mc_Error_PERMISSION_FAIL",
     [mc_Error_END_OF_LINE]     = "mc_Error_END_OF_LINE",
     [mc_Error_END_OF_FILE]     = "mc_Error_END_OF_FILE",
     [mc_Error_ZERO_DIVISION]   = "mc_Error_ZERO_DIVISION",

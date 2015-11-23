@@ -6,7 +6,7 @@ from sys import argv
 
 # Examples
 START = 1
-COUNT = 1
+COUNT = 3
 
 # Tupfile rules
 TO_OBJ = """\

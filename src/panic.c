@@ -240,6 +240,9 @@ mc_Panic_ini_copy(mc_Panic *const self,
             panic->func = self->func;
             break;
 
+        case mc_Panic_NONE:
+            return mc_Error_INVALID_VALUE;
+
         /* If invalid type-enum passed */
         default:
             panic->type = mc_Panic_NONE;
@@ -265,6 +268,7 @@ mc_Panic_fin(mc_Panic *const self)
     self->owner = NULL;
     switch (self->type)
     {
+        case mc_Panic_NONE:
         case mc_Panic_DATA:
             self->data = NULL;
             break;
@@ -481,10 +485,13 @@ mc_Panic_ffput(mc_Panic     *const self,
         /* If self is NULL */
         if (!self)
         {
-            fputs(RC_S(RC_BOLD, "An error occured: ")
-                  RC_F(RC_RED, "mc_Error_ARG_IS_NULL\n")
-                  RC_XFBS("In function: mc_Panic_put\n")
-                  "1st argument is NULL: mc_Panic *const self\n", stream);
+            fputs("\nRuntime error: "
+                  RC_FS(RC_RED, RC_BOLD, "mc_Error_ARG_IS_NULL")
+                  RC_XFS(" => ")
+                  RC_S(RC_BOLD, "mc_Panic *const self is NULL")
+                  RC_XS("\nWhile calling: ")
+                  RC_S(RC_BOLD, "mc_Panic_ffput")
+                  RC_XFBS("\n"), stream);
             return;
         }
     #endif
@@ -496,24 +503,37 @@ mc_Panic_ffput(mc_Panic     *const self,
     /* If this is where the error occured */
     if (self->owner == owner)
     {
-        fputs(RC_S(RC_BOLD, "An error occured: ")
-              RC_F(RC_RED, ""), stream);
+        fputs("\nRuntime error: "
+              RC_FS(RC_RED, RC_BOLD, ""), stream);
         fputs(err_str(self->error), stream);
+
+        /* If message is not NULL */
+        fputs(RC_XFS(" => "), stream);
+        if (message)
+        {
+            fputs(RC_S(RC_BOLD, ""), stream);
+            fputs(message, stream);
+        }
+        else
+            fputs(RC_FS(RC_BLACK, RC_BOLD, "[No error message specified]"),
+                  stream);
         fputs(RC_XFBS("\n"), stream);
-    }
 
-    /* If function is not NULL */
-    if (location)
+        if (location)
+        {
+            fputs("While calling: "
+                  RC_S(RC_BOLD, ""), stream);
+            fputs(location, stream);
+            fputs(RC_XFBS("\n"), stream);
+        }
+    }
+    /* If the error returned by a function called inside this function */
+    else if (location)
     {
-        fputs("In function: ", stream);
+        fputs(RC_F(RC_YELLOW, "> ")
+              RC_XF("Called from: ")
+              RC_F(RC_MAGENTA, ""), stream);
         fputs(location, stream);
-        fputs("\n", stream);
-    }
-
-    /* If message is not NULL */
-    if (message)
-    {
-        fputs(message, stream);
-        fputs("\n", stream);
+        fputs(RC_XFBS("\n"), stream);
     }
 }
