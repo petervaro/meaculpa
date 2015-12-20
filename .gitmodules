@@ -1,0 +1,3 @@
+[submodule "tuplet"]
+	path = tuplet
+	url = https://github.com/petervaro/tuplet.git

@@ -2,66 +2,72 @@
 ## INFO ##
 
 # Include Tuprules.tup
-include_rules
+include tuplet/Tuprules.tup
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-CPPPATH += -Iinclude
-lib = libmeaculpa
+CPPPATH += -I$(INCLUDE_DIR)
+LIBPATH += -L$(LIBRARY_DIR)
+LIBS    += -lpthread
+LIBS    += -ljemalloc
+lib      = meaculpa
 
 
 #------------------------------------------------------------------------------#
-# Build shared library: BASE version
+# Compile objects
 : foreach $(SOURCE_DIR)/*.c                                                    \
-    |> !to_obj $(CPPPATH)                                                      \
-    |> $(BUILD_DIR)/base/%B.o {base}
-: {base}                                                                       \
-    |> !to_lib  -ljemalloc                                                     \
-    |> $(LIBRARY_DIR)/$(lib).base.so {base_lib}
+    |> !to_obj                                                                 \
+    |> $(BUILD_DIR)/%B.$(OBJ_EXT) {lib_build}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Build shared library: SAFE version
-: foreach $(SOURCE_DIR)/*.c                                                    \
-    |> !to_obj $(CPPPATH) -DMC_SAFE                                            \
-    |> $(BUILD_DIR)/safe/%B.o {safe}
-: {safe}                                                                       \
-    |> !to_lib -ljemalloc                                                      \
-    |> $(LIBRARY_DIR)/$(lib).safe.so {safe_lib}
+# Build shared library
+: {lib_build}                                                                  \
+    |> !to_lib $(LIBS)                                                         \
+    |> $(LIBRARY_DIR)/lib$(lib).$(LIB_EXT) {lib}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Build shared library: FAST version
-: foreach $(SOURCE_DIR)/*.c                                                    \
-    |> !to_obj $(CPPPATH) -DMC_FAST                                            \
-    |> $(BUILD_DIR)/fast/%B.o {fast}
-: {fast}                                                                       \
-    |> !to_lib -ljemalloc                                                      \
-    |> $(LIBRARY_DIR)/$(lib).fast.so {fast_lib}
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Create symbolic link to default library (SAFE)
-: {safe_lib}                                                                   \
-    |> ^ LNK: symbolic linking^ ln -s $(lib).safe.so %o                        \
-    |> $(LIBRARY_DIR)/$(lib).so
+# Build static library
+: {lib_build}                                                                  \
+    |> !to_arc                                                                 \
+    |> $(LIBRARY_DIR)/lib$(lib).$(ARC_EXT) {arc}
 
 
 #------------------------------------------------------------------------------#
-# Build static library: BASE version
-: {base} |> !to_arc |> $(LIBRARY_DIR)/$(lib).base.a
+# Compile objects
+: foreach samples/example-00/*.c                                               \
+    |> !to_obj                                                                 \
+    |> $(BUILD_DIR)/example-00/%B.$(OBJ_EXT) {bin_build}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Build static library: SAFE version
-: {safe} |> !to_arc |> $(LIBRARY_DIR)/$(lib).safe.a
+# Build binary
+LIBS = -l$(lib)
+: {bin_build} | {lib}                                                          \
+    |> !to_bin $(LIBS)                                                         \
+    |> $(BINARY_DIR)/example-00/main$(BIN_EXT) {bin}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Build static library: FAST version
-: {fast} |> !to_arc |> $(LIBRARY_DIR)/$(lib).fast.a
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Create symbolic link to default library (SAFE)
-: {safe_lib}                                                                   \
-    |> ^ LNK: symbolic linking^ ln -s $(lib).safe.a %o                         \
-    |> $(LIBRARY_DIR)/$(lib).a
+# Run test binary
+ENV_VARS = LD_LIBRARY_PATH=LD_LIBRARY_PATH:$(LIBRARY_DIR)
+: {bin} | {lib} |> !run_it |>
 
 
-#------------------------------------------------------------------------------#
 # Build tests
-run python rules.py samples example safe
+# ifneq (@(TUP_PLATFORM),win32)
+#     run python rules.py samples example safe
+# else
+#     error Directive 'run' is not supported on windows => can't create binaries
+# endif
+
+
+#------------------------------------------------------------------------------#
+# Debug headers and sources (pre-processour output)
+ifdef DEBUG_CPP
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    : foreach $(SOURCE_DIR)/*.c $(INCLUDE_DIR)/meaculpa/*.h                    \
+        |> !to_cpp                                                             \
+        |> $(BUILD_DIR)/cpp-out/%B.pp.%e
+
+    #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+    : foreach samples/example-00/*.c                                           \
+        |> !to_cpp                                                             \
+        |> $(BUILD_DIR)/cpp-out/example-00/%B.pp.%e
+endif

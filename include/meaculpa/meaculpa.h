@@ -2,114 +2,120 @@
 ** INFO */
 
 /* Header guard */
-#ifndef MC_MEA_CULPA_H_9596858801811053
-#define MC_MEA_CULPA_H_9596858801811053 1
+#ifndef MC_MEACULPA_H_1954125576046949
+#define MC_MEACULPA_H_1954125576046949 1
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include standard headers */
 #include <stdio.h>
-/*  const : stderr */
-
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/* Include meaculpa headers */
-#include <meaculpa/error.h>
-/*  type  : mc_Error
-    const : mc_Error_OKAY
-    func  : mc_Error_str */
-#include <meaculpa/panic.h>
-/*  type  : mc_Panic
-            mc_PanicData
-            mc_PanicFunc
-    func  : mc_Panic__ini_data
-            mc_Panic__ini_func
-            mc_Panic__set_owner
-            mc_Panic__owned_by
-            mc_Panic__set_data
-            mc_Panic__set_func
-            mc_Panic_fput */
-
-/* Helper macros
-   P : Panic
-   O : Owner
-   E : Error
-   U : User-pointer
-   T : Type
-   M : Message
-   S : Stream
-   F : Function */
+/*  type  : FILE */
 
 
 /*----------------------------------------------------------------------------*/
-/* If FAST mode is defined */
-#ifdef MC_FAST
-   #define MC__PANIC_INI_VA(P, E, ...) E
-   #define MC__PANIC_PUT_VA(...)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/* If SAFE or BASE is defined */
-#else
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_INI_DATA(P, O, E, U) \
-        mc_Panic__ini_data(P, (mc_PanicFunc)O, E, (mc_PanicData)U)
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_INI_FUNC(P, O, E, U) \
-        mc_Panic__ini_func(P, (mc_PanicFunc)O, E, (mc_PanicFunc)U)
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_INI_VA1(T, P) \
-        MC__PANIC_INI_##T(P, NULL, mc_Error_OKAY, NULL)
-    #define MC__PANIC_INI_VA2(T, P, O) \
-        MC__PANIC_INI_##T(P, NULL, mc_Error_OKAY, NULL)
-    #define MC__PANIC_INI_VA3(T, P, O, E) \
-        MC__PANIC_INI_##T(P, O, E, NULL)
-    #define MC__PANIC_INI_VA4(T, P, O, E, U) \
-        MC__PANIC_INI_##T(P, O, E, U)
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_INI_VA_DISPATCHER(_1, _2, _3, _4, M, ...) M
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_INI_VA(T, ...)                                           \
-        MC__PANIC_INI_VA_DISPATCHER(__VA_ARGS__,                               \
-                                    MC__PANIC_INI_VA4,                         \
-                                    MC__PANIC_INI_VA3,                         \
-                                    MC__PANIC_INI_VA2,                         \
-                                    MC__PANIC_INI_VA1)(T, __VA_ARGS__)
+typedef unsigned long long int mc_Error;
 
 
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_PUT(P, O, M, S)                                          \
-        mc_Panic_ffput(P,                                                      \
-                       (mc_PanicFunc)O,                                        \
-                       #O,                                                     \
-                       (const char *(*)(int))mc_Error_str,                     \
-                       M,                                                      \
-                       S)
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_PUT_VA1(P) MC__PANIC_PUT(P, NULL, NULL, stderr)
-    #define MC__PANIC_PUT_VA2(P, O) MC__PANIC_PUT(P, O, NULL, stderr)
-    #define MC__PANIC_PUT_VA3(P, O, M) MC__PANIC_PUT(P, O, M, stderr)
-    #define MC__PANIC_PUT_VA4(P, O, M, S) MC__PANIC_PUT(P, O, M, S)
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_PUT_VA_DISPATCHER(_1, _2, _3, _4, M, ...) M
-    /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    #define MC__PANIC_PUT_VA(...)                                              \
-        MC__PANIC_PUT_VA_DISPATCHER(__VA_ARGS__,                               \
-                                    MC__PANIC_PUT_VA4,                         \
-                                    MC__PANIC_PUT_VA3,                         \
-                                    MC__PANIC_PUT_VA2,                         \
-                                    MC__PANIC_PUT_VA1)(__VA_ARGS__)
-#endif /* defined(MC_FAST) */
+/*----------------------------------------------------------------------------*/
+extern const mc_Error   mc_Error_NONE,
+                        /* No error */
+                        mc_Error_OKAY,
+                        /* Generic error */
+                        mc_Error_FAIL,
 
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_ini_data(...) MC__PANIC_INI_VA(DATA, __VA_ARGS__)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_ini_func(...) MC__PANIC_INI_VA(FUNC, __VA_ARGS__)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_put(...) MC__PANIC_PUT_VA(__VA_ARGS__)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_set_data(P, U)  mc_Panic__set_data(P, (mc_PanicData)U)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_set_func(P, U)  mc_Panic__set_func(P, (mc_PanicFunc)U)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_set_owner(P, O) mc_Panic__set_owner(P, (mc_PanicFunc)O)
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define mc_Panic_owned_by(P, F) mc_Panic__owned_by(P, (mc_PanicFunc)F)
+                        /* Implementation specific errors */
+                        mc_Error_DEPRECATED,
+                        mc_Error_EXPERIMENTAL,
 
-#endif /* MC_MEA_CULPA_H_9596858801811053 */
+                        /* Meaculpa specific errors */
+                        mc_Error_UNKNOWN_ERROR,
+
+                        /* Function invoking specific errors */
+                        mc_Error_ARG_IS_NULL,
+                        mc_Error_INVALID_VALUE,
+                        mc_Error_INVALID_INDEX,
+                        mc_Error_INVALID_KEY,
+                        mc_Error_STOP_ITERATION,
+
+                        /* Memory and instance management errors */
+                        mc_Error_ALLOC_FAIL,
+                        mc_Error_INI_FAIL,
+                        mc_Error_FIN_FAIL,
+
+                        /* File I/O specific errors */
+                        mc_Error_FILE_ACCESS,
+                        mc_Error_FILE_NOT_FOUND,
+                        mc_Error_PERMISSION_FAIL,
+                        mc_Error_END_OF_LINE,
+                        mc_Error_END_OF_FILE,
+
+                        /* Math specific errors */
+                        mc_Error_ZERO_DIVISION,
+
+                        /* Error components
+                           WARN: DO NOT USE THESE COMPONENTS DIRECTLY! */
+                        mc_Error__COMPONENT_1,
+                        mc_Error__COMPONENT_2,
+                        mc_Error__COMPONENT_3,
+                        mc_Error__COMPONENT_4,
+                        mc_Error__COMPONENT_5,
+                        mc_Error__COMPONENT_6,
+                        mc_Error__COMPONENT_7,
+                        mc_Error__COMPONENT_8,
+                        mc_Error__COMPONENT_9,
+                        mc_Error__COMPONENT_10,
+                        mc_Error__COMPONENT_11,
+                        mc_Error__COMPONENT_12;
+
+
+/*----------------------------------------------------------------------------*/
+const char *
+mc_Error_str(mc_Error error);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+void
+mc_Error__put(mc_Error                error,
+              const char *restrict    function,
+              const char *restrict    file,
+              int                     messages,
+           /* const char *restrict */ ...);
+
+
+/*----------------------------------------------------------------------------*/
+void
+mc_stream_ini(void);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+void
+mc_stream_fin(void);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Return:  mc_Error_OKAY
+            mc_Error_ARG_IS_NULL */
+mc_Error
+mc_stream_set(FILE     *restrict stream,
+              mc_Error           silenced);
+
+
+/*----------------------------------------------------------------------------*/
+#define MC_ERROR__COMPOSITE(E, I)   (mc_Error_##E | mc_Error__COMPONENT_##I)
+#define mc_Error_OKAY(I)            MC_ERROR__COMPOSITE(OKAY, I)
+#define mc_Error_FAIL(I)            MC_ERROR__COMPOSITE(FAIL, I)
+#define mc_Error_DEPRECATED(I)      MC_ERROR__COMPOSITE(DEPRECATED, I)
+#define mc_Error_EXPERIMENTAL(I)    MC_ERROR__COMPOSITE(EXPERIMENTAL, I)
+#define mc_Error_UNKNOWN_ERROR(I)   MC_ERROR__COMPOSITE(UNKNOWN_ERROR, I)
+#define mc_Error_ARG_IS_NULL(I)     MC_ERROR__COMPOSITE(ARG_IS_NULL, I)
+#define mc_Error_INVALID_VALUE(I)   MC_ERROR__COMPOSITE(INVALID_VALUE, I)
+#define mc_Error_INVALID_INDEX(I)   MC_ERROR__COMPOSITE(INVALID_INDEX, I)
+#define mc_Error_INVALID_KEY(I)     MC_ERROR__COMPOSITE(INVALID_KEY, I)
+#define mc_Error_STOP_ITERATION(I)  MC_ERROR__COMPOSITE(STOP_ITERATION, I)
+#define mc_Error_ALLOC_FAIL(I)      MC_ERROR__COMPOSITE(ALLOC_FAIL, I)
+#define mc_Error_INI_FAIL(I)        MC_ERROR__COMPOSITE(INI_FAIL, I)
+#define mc_Error_FIN_FAIL(I)        MC_ERROR__COMPOSITE(FIN_FAIL, I)
+#define mc_Error_FILE_ACCESS(I)     MC_ERROR__COMPOSITE(FILE_ACCESS, I)
+#define mc_Error_FILE_NOT_FOUND(I)  MC_ERROR__COMPOSITE(FILE_NOT_FOUND, I)
+#define mc_Error_PERMISSION_FAIL(I) MC_ERROR__COMPOSITE(PERMISSION_FAIL, I)
+#define mc_Error_END_OF_LINE(I)     MC_ERROR__COMPOSITE(END_OF_LINE, I)
+#define mc_Error_END_OF_FILE(I)     MC_ERROR__COMPOSITE(END_OF_FILE, I)
+#define mc_Error_ZERO_DIVISION(I)   MC_ERROR__COMPOSITE(ZERO_DIVISION, I)
+#define mc_Error_put(E, ...)        mc_Error__put(E, __func__,                 \
+                                                     __FILE__,                 \
+                                                     __VA_ARGS__)
+
+#endif /* MC_MEACULPA_H_1954125576046949 */
