@@ -138,7 +138,7 @@ static const char *const mc_ERRORS[] =
 
 
 /*----------------------------------------------------------------------------*/
-const char *
+const char*
 mc_Error_str(mc_Error error)
 {
     if (!error)                          return mc_ERRORS[0];
@@ -166,11 +166,11 @@ mc_Error_str(mc_Error error)
 
 /*----------------------------------------------------------------------------*/
 void
-mc_Error__put(mc_Error                error,
-              const char *restrict    function,
-              const char *restrict    file,
-              int                     messages,
-           /* const char *restrict */ ...)
+mc_Error__put(mc_Error    error,
+              const char *function,
+              const char *file,
+              int         messages,
+           /* const char* */ ...)
 {
     #ifndef MC_FAST
         FILE *restrict stream = mc_STREAM ? mc_STREAM : stderr;
@@ -279,14 +279,16 @@ mc_stream_fin(void)
 
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Return : mc_Error_OKAY
+            mc_Error_ARG_IS_NULL */
 mc_Error
-mc_stream_set(FILE     *restrict stream,
-              mc_Error           silenced)
+mc_stream_set(FILE     *stream,
+              mc_Error  muted)
 {
     /* If stream is NULL */
     if (!stream)
     {
-        if (~silenced & mc_ARG_IS_NULL)
+        if (~muted & mc_ARG_IS_NULL)
             mc_Error_put(mc_ARG_IS_NULL, 1,
                          "1st argument 'FILE *restrict stream' is NULL");
         return mc_ARG_IS_NULL;

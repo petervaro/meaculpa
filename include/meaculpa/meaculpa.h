@@ -78,26 +78,37 @@ extern const mc_Error   mc_OKAY,
 
 
 /*----------------------------------------------------------------------------*/
+/* TODO: **mc_Error_str_set**
+         Consider turning mc_Error_str into a function pointer, which is set to
+         the default str method at the beginning. The mc_Error_str_set would
+         allow the user to specify another method which could be used to extend
+         the number of errors (and therefore their representations) with custom
+         user defined ones. The only drawback I see right now, is how to manage,
+         if there are at least two libraries trying to work together and both
+         are using meaculpa and trying to overload the mc_Error_str method with
+         theirown versions? Not to mention the overlapping error constants. One
+         possible solution could be the explicit passing of mc_Error_str to
+         mc_Error__put each time it is called.. so much overhead :( */
+const char*
+mc_Error_str(mc_Error error);
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* TODO: **fput and sput**
          mc_Error_put  => output to mc_STREAM
          mc_Error_fput => output to a call-time specified stream
          mc_Error_sput => output to a call-time specified string-buffer
-         Rational: meaculpa should work in a threaded environment. If there are
+         Rationale: meaculpa should work in a threaded environment. If there are
          multiple threads printing to the same unbuffered stream, the output
          will be chaotic and the back-trace would be useless. But if the user
          has and option to print the back-trace into a buffer, which is used by
          a single thread, then at the end, when threads are joined or aborted
          the parent process could print out the whole back-trace at once from
          the buffer */
-const char *
-mc_Error_str(mc_Error error);
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void
-mc_Error__put(mc_Error                error,
-              const char *restrict    function,
-              const char *restrict    file,
-              int                     messages,
-           /* const char *restrict */ ...);
+mc_Error__put(mc_Error    error,
+              const char *function,
+              const char *file,
+              int         messages,
+           /* const char* */ ...);
 
 
 /*----------------------------------------------------------------------------*/
@@ -107,11 +118,15 @@ mc_stream_ini(void);
 void
 mc_stream_fin(void);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/* Return:  mc_Error_OKAY
+/* Return : mc_Error_OKAY
             mc_Error_ARG_IS_NULL */
+/* TODO: **colored**
+         A stream should be initialized as if it can deal with ASCII color
+         sequences or not. The mc_Error_put should take into account wether a
+         stream is colored or not */
 mc_Error
-mc_stream_set(FILE     *restrict stream,
-              mc_Error           silenced);
+mc_stream_set(FILE     *stream,
+              mc_Error  muted);
 
 
 /*----------------------------------------------------------------------------*/
@@ -136,5 +151,8 @@ mc_stream_set(FILE     *restrict stream,
 #define mc_END_OF_FILE(I)     MC__MARKED(END_OF_FILE, I)
 #define mc_ZERO_DIVISION(I)   MC__MARKED(ZERO_DIVISION, I)
 #define mc_Error_put(E, ...)  mc_Error__put(E, __func__, __FILE__, __VA_ARGS__)
+
+/* TODO: **message-macros**
+         Create predefined message composer macros */
 
 #endif /* MC_MEACULPA_H_1954125576046949 */

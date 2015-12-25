@@ -11,7 +11,7 @@
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include meaculpa headers */
-#include <meaculpa/meaculpa.h>
+#include "meaculpa/meaculpa.h"
 /*  type  : mc_Error
     macro : mc_Error_put
     const : mc_MUTE_NONE
@@ -47,18 +47,18 @@
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 static inline mc_Error
-divide(int           dividend,
-       int           divisor,
-       int *restrict quotient,
-       mc_Error      muted);
+divide(int       dividend,
+       int       divisor,
+       int      *quotient,
+       mc_Error  muted);
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 static inline mc_Error
-div_default(int           dividend,
-            int           divisor,
-            int *restrict quotient,
-            int           on_zero,
-            mc_Error      muted);
+div_default(int       dividend,
+            int       divisor,
+            int      *quotient,
+            int       on_zero,
+            mc_Error  muted);
 
 
 
@@ -94,11 +94,11 @@ main(void)
 /* Return : mc_OKAY
             mc_ARG_IS_NULL */
 static inline mc_Error
-div_default(int           dividend,
-            int           divisor,
-            int *restrict quotient,
-            int           on_zero,
-            mc_Error      muted)
+div_default(int       dividend,
+            int       divisor,
+            int      *quotient,
+            int       on_zero,
+            mc_Error  muted)
 {
     mc_Error error;
     if ((error = divide(dividend, divisor, quotient, muted | mc_ZERO_DIVISION)))
@@ -122,16 +122,16 @@ div_default(int           dividend,
             mc_ARG_IS_NULL
             mc_ZERO_DIVISION */
 static inline mc_Error
-divide(int           dividend,
-       int           divisor,
-       int *restrict quotient,
-       mc_Error      muted)
+divide(int       dividend,
+       int       divisor,
+       int      *quotient,
+       mc_Error  muted)
 {
     if (!quotient)
     {
         if (~muted & mc_ARG_IS_NULL)
             mc_Error_put(mc_ARG_IS_NULL, -1,
-                         "3rd argument 'int *restrict quotient' is NULL");
+                         "3rd argument 'int *quotient' is NULL");
         return mc_ARG_IS_NULL;
     }
 

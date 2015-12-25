@@ -16,7 +16,7 @@
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include meaculpa headers */
-#include <meaculpa/meaculpa.h>
+#include "meaculpa/meaculpa.h"
 /*  type  : mc_Error
     const : mc_MUTE_NONE
             mc_MUTE_ALL
@@ -70,13 +70,13 @@ open_file(const char  *restrict name,
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 static inline mc_Error
-duplicate_backups(const char *restrict name,
-                  mc_Error             muted);
+duplicate_backups(const char *name,
+                  mc_Error    muted);
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 static inline mc_Error
-manage_backups(const char *restrict name,
-               mc_Error             muted);
+manage_backups(const char *name,
+               mc_Error    muted);
 
 
 
@@ -107,8 +107,8 @@ main(void)
             mc_FILE_ACCESS(3) => data (original)
             mc_FILE_ACCESS(4) => data (duplicate) */
 static inline mc_Error
-manage_backups(const char *restrict name,
-               mc_Error             muted)
+manage_backups(const char *name,
+               mc_Error    muted)
 {
     mc_Error    error,
                 silenced;
@@ -179,8 +179,8 @@ manage_backups(const char *restrict name,
             mc_FILE_ACCESS(1) => read original
             mc_FILE_ACCESS(2) => write duplicate */
 static inline mc_Error
-duplicate_backups(const char *restrict name,
-                  mc_Error             muted)
+duplicate_backups(const char *name,
+                  mc_Error    muted)
 {
     mc_Error    error;
     FILE       *file_orig,
