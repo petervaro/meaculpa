@@ -62,19 +62,19 @@ typedef enum
 } FileMode;
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-mc_Error
+static inline mc_Error
 open_file(const char  *restrict name,
           FILE       **restrict file,
           FileMode              mode,
           mc_Error              muted);
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-mc_Error
+static inline mc_Error
 duplicate_backups(const char *restrict name,
                   mc_Error             muted);
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-mc_Error
+static inline mc_Error
 manage_backups(const char *restrict name,
                mc_Error             muted);
 
@@ -106,7 +106,7 @@ main(void)
             mc_FILE_ACCESS(2) => log (duplicate)
             mc_FILE_ACCESS(3) => data (original)
             mc_FILE_ACCESS(4) => data (duplicate) */
-mc_Error
+static inline mc_Error
 manage_backups(const char *restrict name,
                mc_Error             muted)
 {
@@ -178,7 +178,7 @@ manage_backups(const char *restrict name,
 /* Return : mc_OKAY
             mc_FILE_ACCESS(1) => read original
             mc_FILE_ACCESS(2) => write duplicate */
-mc_Error
+static inline mc_Error
 duplicate_backups(const char *restrict name,
                   mc_Error             muted)
 {
@@ -229,7 +229,7 @@ duplicate_backups(const char *restrict name,
 /*----------------------------------------------------------------------------*/
 /* Return : mc_OKAY
             mc_FILE_ACCESS */
-mc_Error
+static inline mc_Error
 open_file(const char  *restrict name,
           FILE       **restrict file,
           FileMode              mode,
