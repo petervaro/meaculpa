@@ -16,58 +16,79 @@ typedef unsigned long long int mc_Error;
 
 
 /*----------------------------------------------------------------------------*/
-extern const mc_Error   mc_Error_NONE,
-                        /* No error */
-                        mc_Error_OKAY,
-                        /* Generic error */
-                        mc_Error_FAIL,
-
-                        /* Implementation specific errors */
-                        mc_Error_DEPRECATED,
-                        mc_Error_EXPERIMENTAL,
-
-                        /* Meaculpa specific errors */
-                        mc_Error_UNKNOWN_ERROR,
-
-                        /* Function invoking specific errors */
-                        mc_Error_ARG_IS_NULL,
-                        mc_Error_INVALID_VALUE,
-                        mc_Error_INVALID_INDEX,
-                        mc_Error_INVALID_KEY,
-                        mc_Error_STOP_ITERATION,
-
-                        /* Memory and instance management errors */
-                        mc_Error_ALLOC_FAIL,
-                        mc_Error_INI_FAIL,
-                        mc_Error_FIN_FAIL,
-
-                        /* File I/O specific errors */
-                        mc_Error_FILE_ACCESS,
-                        mc_Error_FILE_NOT_FOUND,
-                        mc_Error_PERMISSION_FAIL,
-                        mc_Error_END_OF_LINE,
-                        mc_Error_END_OF_FILE,
-
-                        /* Math specific errors */
-                        mc_Error_ZERO_DIVISION,
-
-                        /* Error components
-                           WARN: DO NOT USE THESE COMPONENTS DIRECTLY! */
-                        mc_Error__COMPONENT_1,
-                        mc_Error__COMPONENT_2,
-                        mc_Error__COMPONENT_3,
-                        mc_Error__COMPONENT_4,
-                        mc_Error__COMPONENT_5,
-                        mc_Error__COMPONENT_6,
-                        mc_Error__COMPONENT_7,
-                        mc_Error__COMPONENT_8,
-                        mc_Error__COMPONENT_9,
-                        mc_Error__COMPONENT_10,
-                        mc_Error__COMPONENT_11,
-                        mc_Error__COMPONENT_12;
+/* Error silencer wildcards */
+extern const mc_Error   mc_MUTE_NONE,
+                        mc_MUTE_ALL;
 
 
 /*----------------------------------------------------------------------------*/
+/* Error signals */
+extern const mc_Error   mc_OKAY,
+
+                        /* Generic error */
+                        mc_FAIL,
+
+                        /* Implementation specific errors */
+                        mc_DEPRECATED,
+                        mc_EXPERIMENTAL,
+
+                        /* Meaculpa specific errors */
+                        mc_UNKNOWN_ERROR,
+
+                        /* Function invoking specific errors */
+                        mc_ARG_IS_NULL,
+                        mc_INVALID_VALUE,
+                        mc_INVALID_INDEX,
+                        mc_INVALID_KEY,
+                        mc_STOP_ITERATION,
+
+                        /* Memory and instance management errors */
+                        mc_ALLOC_FAIL,
+                        mc_INI_FAIL,
+                        mc_FIN_FAIL,
+
+                        /* File I/O specific errors */
+                        mc_FILE_ACCESS,
+                        mc_FILE_NOT_FOUND,
+                        mc_PERMISSION_FAIL,
+                        mc_END_OF_LINE,
+                        mc_END_OF_FILE,
+
+                        /* Math specific errors */
+                        mc_ZERO_DIVISION,
+
+                        /* Error markers
+                           WARN: DO NOT USE THESE MARKERS DIRECTLY! */
+                        mc__MARKER_16,
+                        mc__MARKER_15,
+                        mc__MARKER_14,
+                        mc__MARKER_13,
+                        mc__MARKER_12,
+                        mc__MARKER_11,
+                        mc__MARKER_10,
+                        mc__MARKER_9,
+                        mc__MARKER_8,
+                        mc__MARKER_7,
+                        mc__MARKER_6,
+                        mc__MARKER_5,
+                        mc__MARKER_4,
+                        mc__MARKER_3,
+                        mc__MARKER_2,
+                        mc__MARKER_1;
+
+
+/*----------------------------------------------------------------------------*/
+/* TODO: **fput and sput**
+         mc_Error_put  => output to mc_STREAM
+         mc_Error_fput => output to a call-time specified stream
+         mc_Error_sput => output to a call-time specified string-buffer
+         Rational: meaculpa should work in a threaded environment. If there are
+         multiple threads printing to the same unbuffered stream, the output
+         will be chaotic and the back-trace would be useless. But if the user
+         has and option to print the back-trace into a buffer, which is used by
+         a single thread, then at the end, when threads are joined or aborted
+         the parent process could print out the whole back-trace at once from
+         the buffer */
 const char *
 mc_Error_str(mc_Error error);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -94,28 +115,26 @@ mc_stream_set(FILE     *restrict stream,
 
 
 /*----------------------------------------------------------------------------*/
-#define MC_ERROR__COMPOSITE(E, I)   (mc_Error_##E | mc_Error__COMPONENT_##I)
-#define mc_Error_OKAY(I)            MC_ERROR__COMPOSITE(OKAY, I)
-#define mc_Error_FAIL(I)            MC_ERROR__COMPOSITE(FAIL, I)
-#define mc_Error_DEPRECATED(I)      MC_ERROR__COMPOSITE(DEPRECATED, I)
-#define mc_Error_EXPERIMENTAL(I)    MC_ERROR__COMPOSITE(EXPERIMENTAL, I)
-#define mc_Error_UNKNOWN_ERROR(I)   MC_ERROR__COMPOSITE(UNKNOWN_ERROR, I)
-#define mc_Error_ARG_IS_NULL(I)     MC_ERROR__COMPOSITE(ARG_IS_NULL, I)
-#define mc_Error_INVALID_VALUE(I)   MC_ERROR__COMPOSITE(INVALID_VALUE, I)
-#define mc_Error_INVALID_INDEX(I)   MC_ERROR__COMPOSITE(INVALID_INDEX, I)
-#define mc_Error_INVALID_KEY(I)     MC_ERROR__COMPOSITE(INVALID_KEY, I)
-#define mc_Error_STOP_ITERATION(I)  MC_ERROR__COMPOSITE(STOP_ITERATION, I)
-#define mc_Error_ALLOC_FAIL(I)      MC_ERROR__COMPOSITE(ALLOC_FAIL, I)
-#define mc_Error_INI_FAIL(I)        MC_ERROR__COMPOSITE(INI_FAIL, I)
-#define mc_Error_FIN_FAIL(I)        MC_ERROR__COMPOSITE(FIN_FAIL, I)
-#define mc_Error_FILE_ACCESS(I)     MC_ERROR__COMPOSITE(FILE_ACCESS, I)
-#define mc_Error_FILE_NOT_FOUND(I)  MC_ERROR__COMPOSITE(FILE_NOT_FOUND, I)
-#define mc_Error_PERMISSION_FAIL(I) MC_ERROR__COMPOSITE(PERMISSION_FAIL, I)
-#define mc_Error_END_OF_LINE(I)     MC_ERROR__COMPOSITE(END_OF_LINE, I)
-#define mc_Error_END_OF_FILE(I)     MC_ERROR__COMPOSITE(END_OF_FILE, I)
-#define mc_Error_ZERO_DIVISION(I)   MC_ERROR__COMPOSITE(ZERO_DIVISION, I)
-#define mc_Error_put(E, ...)        mc_Error__put(E, __func__,                 \
-                                                     __FILE__,                 \
-                                                     __VA_ARGS__)
+#define MC__MARKED(E, I)      (mc_##E | mc__MARKER_##I)
+#define mc_OKAY(I)            MC__MARKED(OKAY, I)
+#define mc_FAIL(I)            MC__MARKED(FAIL, I)
+#define mc_DEPRECATED(I)      MC__MARKED(DEPRECATED, I)
+#define mc_EXPERIMENTAL(I)    MC__MARKED(EXPERIMENTAL, I)
+#define mc_UNKNOWN_ERROR(I)   MC__MARKED(UNKNOWN_ERROR, I)
+#define mc_ARG_IS_NULL(I)     MC__MARKED(ARG_IS_NULL, I)
+#define mc_INVALID_VALUE(I)   MC__MARKED(INVALID_VALUE, I)
+#define mc_INVALID_INDEX(I)   MC__MARKED(INVALID_INDEX, I)
+#define mc_INVALID_KEY(I)     MC__MARKED(INVALID_KEY, I)
+#define mc_STOP_ITERATION(I)  MC__MARKED(STOP_ITERATION, I)
+#define mc_ALLOC_FAIL(I)      MC__MARKED(ALLOC_FAIL, I)
+#define mc_INI_FAIL(I)        MC__MARKED(INI_FAIL, I)
+#define mc_FIN_FAIL(I)        MC__MARKED(FIN_FAIL, I)
+#define mc_FILE_ACCESS(I)     MC__MARKED(FILE_ACCESS, I)
+#define mc_FILE_NOT_FOUND(I)  MC__MARKED(FILE_NOT_FOUND, I)
+#define mc_PERMISSION_FAIL(I) MC__MARKED(PERMISSION_FAIL, I)
+#define mc_END_OF_LINE(I)     MC__MARKED(END_OF_LINE, I)
+#define mc_END_OF_FILE(I)     MC__MARKED(END_OF_FILE, I)
+#define mc_ZERO_DIVISION(I)   MC__MARKED(ZERO_DIVISION, I)
+#define mc_Error_put(E, ...)  mc_Error__put(E, __func__, __FILE__, __VA_ARGS__)
 
 #endif /* MC_MEACULPA_H_1954125576046949 */

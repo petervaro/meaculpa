@@ -47,85 +47,93 @@ static pthread_mutex_t  mc_STREAM_ACCESS = PTHREAD_MUTEX_INITIALIZER;
 
 
 /*----------------------------------------------------------------------------*/
-/* Error constants and NONE silenced-flag */
-const mc_Error  mc_Error_NONE            = 0ull,
+/* Error silencer wildcards */
+const mc_Error   mc_MUTE_NONE =  0ull,
+                 mc_MUTE_ALL  = ~0ull;
 
-                /* No error */
-                mc_Error_OKAY            = 0ull,
+
+/*----------------------------------------------------------------------------*/
+/* Error signals */
+const mc_Error  mc_OKAY            = 0ull,
+
                 /* Generic error */
-                mc_Error_FAIL            = 1ull << 0ull,
+                mc_FAIL            = 1ull << 0,
 
                 /* Implementation specific errors */
-                mc_Error_DEPRECATED      = 1ull << 1ull,
-                mc_Error_EXPERIMENTAL    = 1ull << 2ull,
+                mc_DEPRECATED      = 1ull << 1,
+                mc_EXPERIMENTAL    = 1ull << 2,
 
                 /* Meaculpa specific errors */
-                mc_Error_UNKNOWN_ERROR   = 1ull << 3ull,
+                mc_UNKNOWN_ERROR   = 1ull << 3,
 
                 /* Function invoking specific errors */
-                mc_Error_ARG_IS_NULL     = 1ull << 4ull,
-                mc_Error_INVALID_VALUE   = 1ull << 5ull,
-                mc_Error_INVALID_INDEX   = 1ull << 6ull,
-                mc_Error_INVALID_KEY     = 1ull << 7ull,
-                mc_Error_STOP_ITERATION  = 1ull << 8ull,
+                mc_ARG_IS_NULL     = 1ull << 4,
+                mc_INVALID_VALUE   = 1ull << 5,
+                mc_INVALID_INDEX   = 1ull << 6,
+                mc_INVALID_KEY     = 1ull << 7,
+                mc_STOP_ITERATION  = 1ull << 8,
 
                 /* Memory and instance management errors */
-                mc_Error_ALLOC_FAIL      = 1ull << 9ull,
-                mc_Error_INI_FAIL        = 1ull << 10ull,
-                mc_Error_FIN_FAIL        = 1ull << 11ull,
+                mc_ALLOC_FAIL      = 1ull << 9,
+                mc_INI_FAIL        = 1ull << 10,
+                mc_FIN_FAIL        = 1ull << 11,
 
                 /* File I/O specific errors */
-                mc_Error_FILE_ACCESS     = 1ull << 12ull,
-                mc_Error_FILE_NOT_FOUND  = 1ull << 13ull,
-                mc_Error_PERMISSION_FAIL = 1ull << 14ull,
-                mc_Error_END_OF_LINE     = 1ull << 15ull,
-                mc_Error_END_OF_FILE     = 1ull << 16ull,
+                mc_FILE_ACCESS     = 1ull << 12,
+                mc_FILE_NOT_FOUND  = 1ull << 13,
+                mc_PERMISSION_FAIL = 1ull << 14,
+                mc_END_OF_LINE     = 1ull << 15,
+                mc_END_OF_FILE     = 1ull << 16,
 
                 /* Math specific errors */
-                mc_Error_ZERO_DIVISION   = 1ull << 17ull,
+                mc_ZERO_DIVISION   = 1ull << 17,
 
                 /*
                     ... CUSTOM ERRORS GOES HERE...
                 */
 
-                /* Error components
+                /* Error markers
                    NOTE: HAS TO BE THE LAST ONES! */
-                mc_Error__COMPONENT_1    = 1ull << 52ull,
-                mc_Error__COMPONENT_2    = 1ull << 53ull,
-                mc_Error__COMPONENT_3    = 1ull << 54ull,
-                mc_Error__COMPONENT_4    = 1ull << 55ull,
-                mc_Error__COMPONENT_5    = 1ull << 56ull,
-                mc_Error__COMPONENT_6    = 1ull << 57ull,
-                mc_Error__COMPONENT_7    = 1ull << 58ull,
-                mc_Error__COMPONENT_8    = 1ull << 59ull,
-                mc_Error__COMPONENT_9    = 1ull << 60ull,
-                mc_Error__COMPONENT_10   = 1ull << 61ull,
-                mc_Error__COMPONENT_11   = 1ull << 62ull,
-                mc_Error__COMPONENT_12   = 1ull << 63ull;
+                mc__MARKER_16      = 1ull << 48,
+                mc__MARKER_15      = 1ull << 49,
+                mc__MARKER_14      = 1ull << 50,
+                mc__MARKER_13      = 1ull << 51,
+                mc__MARKER_12      = 1ull << 52,
+                mc__MARKER_11      = 1ull << 53,
+                mc__MARKER_10      = 1ull << 54,
+                mc__MARKER_9       = 1ull << 55,
+                mc__MARKER_8       = 1ull << 56,
+                mc__MARKER_7       = 1ull << 57,
+                mc__MARKER_6       = 1ull << 58,
+                mc__MARKER_5       = 1ull << 59,
+                mc__MARKER_4       = 1ull << 60,
+                mc__MARKER_3       = 1ull << 61,
+                mc__MARKER_2       = 1ull << 62,
+                mc__MARKER_1       = 1ull << 63;
 
 
 /*----------------------------------------------------------------------------*/
-static const char *const ERRORS[] =
+static const char *const mc_ERRORS[] =
 {
-    "mc_Error_OKAY",
-    "mc_Error_FAIL",
-    "mc_Error_DEPRECATED",
-    "mc_Error_EXPERIMENTAL",
-    "mc_Error_UNKNOWN_ERROR",
-    "mc_Error_ARG_IS_NULL",
-    "mc_Error_INVALID_VALUE",
-    "mc_Error_INVALID_INDEX",
-    "mc_Error_INVALID_KEY",
-    "mc_Error_STOP_ITERATION",
-    "mc_Error_ALLOC_FAIL",
-    "mc_Error_INI_FAIL",
-    "mc_Error_FIN_FAIL",
-    "mc_Error_FILE_ACCESS",
-    "mc_Error_FILE_NOT_FOUND",
-    "mc_Error_PERMISSION_FAIL",
-    "mc_Error_END_OF_LINE",
-    "mc_Error_END_OF_FILE",
-    "mc_Error_ZERO_DIVISION",
+    "mc_OKAY",
+    "mc_FAIL",
+    "mc_DEPRECATED",
+    "mc_EXPERIMENTAL",
+    "mc_UNKNOWN_ERROR",
+    "mc_ARG_IS_NULL",
+    "mc_INVALID_VALUE",
+    "mc_INVALID_INDEX",
+    "mc_INVALID_KEY",
+    "mc_STOP_ITERATION",
+    "mc_ALLOC_FAIL",
+    "mc_INI_FAIL",
+    "mc_FIN_FAIL",
+    "mc_FILE_ACCESS",
+    "mc_FILE_NOT_FOUND",
+    "mc_PERMISSION_FAIL",
+    "mc_END_OF_LINE",
+    "mc_END_OF_FILE",
+    "mc_ZERO_DIVISION",
 };
 
 
@@ -133,26 +141,26 @@ static const char *const ERRORS[] =
 const char *
 mc_Error_str(mc_Error error)
 {
-    if (!error)                                return ERRORS[0];
-    else if (error & mc_Error_FAIL)            return ERRORS[1];
-    else if (error & mc_Error_DEPRECATED)      return ERRORS[2];
-    else if (error & mc_Error_EXPERIMENTAL)    return ERRORS[3];
-    else if (error & mc_Error_UNKNOWN_ERROR)   return ERRORS[4];
-    else if (error & mc_Error_ARG_IS_NULL)     return ERRORS[5];
-    else if (error & mc_Error_INVALID_VALUE)   return ERRORS[6];
-    else if (error & mc_Error_INVALID_INDEX)   return ERRORS[7];
-    else if (error & mc_Error_INVALID_KEY)     return ERRORS[8];
-    else if (error & mc_Error_STOP_ITERATION)  return ERRORS[9];
-    else if (error & mc_Error_ALLOC_FAIL)      return ERRORS[10];
-    else if (error & mc_Error_INI_FAIL)        return ERRORS[11];
-    else if (error & mc_Error_FIN_FAIL)        return ERRORS[12];
-    else if (error & mc_Error_FILE_ACCESS)     return ERRORS[13];
-    else if (error & mc_Error_FILE_NOT_FOUND)  return ERRORS[14];
-    else if (error & mc_Error_PERMISSION_FAIL) return ERRORS[15];
-    else if (error & mc_Error_END_OF_LINE)     return ERRORS[16];
-    else if (error & mc_Error_END_OF_FILE)     return ERRORS[17];
-    else if (error & mc_Error_ZERO_DIVISION)   return ERRORS[18];
-    else                                       return ERRORS[4];
+    if (!error)                          return mc_ERRORS[0];
+    else if (error & mc_FAIL)            return mc_ERRORS[1];
+    else if (error & mc_DEPRECATED)      return mc_ERRORS[2];
+    else if (error & mc_EXPERIMENTAL)    return mc_ERRORS[3];
+    else if (error & mc_UNKNOWN_ERROR)   return mc_ERRORS[4];
+    else if (error & mc_ARG_IS_NULL)     return mc_ERRORS[5];
+    else if (error & mc_INVALID_VALUE)   return mc_ERRORS[6];
+    else if (error & mc_INVALID_INDEX)   return mc_ERRORS[7];
+    else if (error & mc_INVALID_KEY)     return mc_ERRORS[8];
+    else if (error & mc_STOP_ITERATION)  return mc_ERRORS[9];
+    else if (error & mc_ALLOC_FAIL)      return mc_ERRORS[10];
+    else if (error & mc_INI_FAIL)        return mc_ERRORS[11];
+    else if (error & mc_FIN_FAIL)        return mc_ERRORS[12];
+    else if (error & mc_FILE_ACCESS)     return mc_ERRORS[13];
+    else if (error & mc_FILE_NOT_FOUND)  return mc_ERRORS[14];
+    else if (error & mc_PERMISSION_FAIL) return mc_ERRORS[15];
+    else if (error & mc_END_OF_LINE)     return mc_ERRORS[16];
+    else if (error & mc_END_OF_FILE)     return mc_ERRORS[17];
+    else if (error & mc_ZERO_DIVISION)   return mc_ERRORS[18];
+    else                                 return mc_ERRORS[4];
 }
 
 
@@ -278,10 +286,10 @@ mc_stream_set(FILE     *restrict stream,
     /* If stream is NULL */
     if (!stream)
     {
-        if (~silenced & mc_Error_ARG_IS_NULL)
-            mc_Error_put(mc_Error_ARG_IS_NULL, 1, "1st argument 'FILE "
-                                                  "*restrict stream' is NULL");
-        return mc_Error_ARG_IS_NULL;
+        if (~silenced & mc_ARG_IS_NULL)
+            mc_Error_put(mc_ARG_IS_NULL, 1,
+                         "1st argument 'FILE *restrict stream' is NULL");
+        return mc_ARG_IS_NULL;
     }
 
     /* Lock access to stream */
@@ -293,5 +301,5 @@ mc_stream_set(FILE     *restrict stream,
     /* Grant access to stream */
     pthread_mutex_unlock(&mc_STREAM_ACCESS);
 
-    return mc_Error_OKAY;
+    return mc_OKAY;
 }

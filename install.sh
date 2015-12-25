@@ -9,7 +9,7 @@ then
 else
     printf "Installing libmeaculpa...\n";
     sudo cp -R include/meaculpa /usr/local/include;
-    sudo cp lib/libmeaculpa* /usr/local/lib;
+    sudo cp build-clang-release/lib/libmeaculpa* /usr/local/lib;
     printf "libmeaculpa successfully installed\n";
 fi;
 

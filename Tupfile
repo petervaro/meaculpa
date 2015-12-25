@@ -13,6 +13,9 @@ lib      = meaculpa
 
 
 #------------------------------------------------------------------------------#
+# Analyze sources
+: foreach $(SOURCE_DIR)/*.c |> !analyze |>
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Compile objects
 : foreach $(SOURCE_DIR)/*.c                                                    \
     |> !to_obj                                                                 \
@@ -31,43 +34,41 @@ lib      = meaculpa
     |> $(LIBRARY_DIR)/lib$(lib).$(ARC_EXT) {arc}
 
 
+
 #------------------------------------------------------------------------------#
-# Compile objects
-: foreach samples/example-00/*.c                                               \
+# Analyze sample-source
+: foreach samples/main-*.c |> !analyze |>
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+# Compile sample-sources into objects
+: foreach samples/main-*.c                                                     \
     |> !to_obj                                                                 \
-    |> $(BUILD_DIR)/example-00/%B.$(OBJ_EXT) {bin_build}
+    |> $(BUILD_DIR)/samples/%B.$(OBJ_EXT) {bin_build}
+
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Build binary
+# Build binaries from sample-objects
 LIBS = -l$(lib)
-: {bin_build} | {lib}                                                          \
+: foreach {bin_build} | {lib}                                                  \
     |> !to_bin $(LIBS)                                                         \
-    |> $(BINARY_DIR)/example-00/main$(BIN_EXT) {bin}
+    |> $(BINARY_DIR)/samples/%B$(BIN_EXT) {bin}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-# Run test binary
-ENV_VARS = LD_LIBRARY_PATH=LD_LIBRARY_PATH:$(LIBRARY_DIR)
-: {bin} | {lib} |> !run_it |>
+# Run sample binaries
+ENV_VARS = LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(LIBRARY_DIR)
+: foreach {bin} | {lib} |> !run_it |>
 
-
-# Build tests
-# ifneq (@(TUP_PLATFORM),win32)
-#     run python rules.py samples example safe
-# else
-#     error Directive 'run' is not supported on windows => can't create binaries
-# endif
 
 
 #------------------------------------------------------------------------------#
 # Debug headers and sources (pre-processour output)
-ifdef DEBUG_CPP
+ifdef DEVEL
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
     : foreach $(SOURCE_DIR)/*.c $(INCLUDE_DIR)/meaculpa/*.h                    \
         |> !to_cpp                                                             \
         |> $(BUILD_DIR)/cpp-out/%B.pp.%e
 
     #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-    : foreach samples/example-00/*.c                                           \
+    : foreach samples/main-*.c                                                 \
         |> !to_cpp                                                             \
-        |> $(BUILD_DIR)/cpp-out/example-00/%B.pp.%e
+        |> $(BUILD_DIR)/cpp-out/samples/%B.pp.%e
 endif
