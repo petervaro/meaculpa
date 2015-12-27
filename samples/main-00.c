@@ -15,15 +15,15 @@
     macro : mc_Error_put */
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 core(mc_Error muted);
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 middle_man(mc_Error muted);
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 wrapper(mc_Error muted);
 
 
@@ -43,7 +43,7 @@ main(void)
 
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 wrapper(mc_Error muted)
 {
     mc_Error error;
@@ -58,7 +58,7 @@ wrapper(mc_Error muted)
 
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 middle_man(mc_Error muted)
 {
     mc_Error error;
@@ -73,7 +73,7 @@ middle_man(mc_Error muted)
 
 
 /*----------------------------------------------------------------------------*/
-mc_Error
+static inline mc_Error
 core(mc_Error muted)
 {
     if (~muted & mc_DEPRECATED)

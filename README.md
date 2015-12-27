@@ -5,6 +5,7 @@
 - [The rationale behind it](#the-rationale-behind-it)
 - [The drawbacks](#the-drawbacks)
 - [Dependencies](#dependencies)
+- [Install utility](#install-utility)
 - [End-user build and install](#end-user-build-and-install)
 - [Developer build and install](#developer-build-and-install)
 - [Uninstall](#uninstall)
@@ -35,10 +36,6 @@ Why is it called `meaculpa`?
 > Mea culpa is a Latin phrase that means "through my fault" and is an
 > acknowledgement of having done wrong. [...]
 >
-> The phrase comes from a prayer of confession of sinfulness, known as the
-> *Confiteor*, used in the Roman Rite at the beginning of Mass or when receiving
-> the sacrament of Penance.
->
 > The expression is used also as an admission of having made a mistake that
 > should have been avoided, and may be accompanied by beating the breast as in
 > its use in a religious context.
@@ -57,20 +54,20 @@ error signal or a mixture of valid values and error signals.
 Eventhough this kind of explicitness is a very good thing at such a low-level as
 C can work, it can make proper error-reporting a nightmare. How to tell exactly
 where the error occured? How to handle some of the errors and recover from them,
-while passing on the unrecoverable ones and at the same time printing the
-unhandled error's messages out. Not to mention, that it would also be useful if
+while passing on the unrecoverable ones and at the same time printing only the
+unhandled error messages out? Not to mention, that it would also be useful if
 one could have a full backtraced message stack, when for example an error
 occured in a deeply nested function call-chain!
 
-It may sounds easy to implement such an error-handling/reporting system, but
-most of the existing solutions are reinventing the wheel, and they are adding
-bloated and both process- and memory-expensive runtimes on top of the C runtime.
-This kind of overhead is unacceptable, not to mention, that it is the horror
-itself to work with them in a multithreaded environment.
+It may sounds easy enough to implement an error-handling/reporting library as
+that, but most of the existing solutions are reinventing the wheel, and they are
+adding bloated and both process- and memory-expensive runtimes on top of the C
+runtime. This kind of overhead is unacceptable, not to mention, that it is the
+horror itself to work with them in a multithreaded environment.
 
 `meaculpa` tries to solve the above mentioned problems, with an elegant and very
-efficient way, which remains loyal to the philosophy of C -- it is small, still
-explicit and provides maximum control and flexibility to its users.
+efficient way, which remains loyal to the philosophy of C &mdash; it is small,
+still explicit and provides maximum control and flexibility to its users.
 
 
 
@@ -86,24 +83,27 @@ unsigned integer type, capable of storing 2<sup>64</sup> - 1 values. That is, if
 the same size as a pointer. *(Note: the size of a pointer is not explicitly
 defined in the standard, so this is just a rough approximation.)* So it will
 hardly overflow on the stack &mdash; as returning a pointer won't do that either
-&mdash; but the downside still is: it is very likely that it will be larger than
-a `char`, `bool`, `int` or `enum` values, which are common error signals in C.
+&mdash; but the downside still remains: it is very likely that it will be larger
+than a `char`, `bool`, `int` or `enum` typed values, which are very common error
+signals in C.
 
 The other place where one has to pay, is the mute-flags. To get full control
 over the error riporting, one has to pass an `mc_Error` to a function which is
 capable of returning an `mc_Error`. The cost here is not only the size of the
 new argument, which is the same as in the previous paragraph, but it also means
 the developer has to pass this value explicitly every time such function is
-invoked. Of course this could be eliminated by variadic macros.
+invoked. Of course this could be eliminated by defining variadic macros as
+function wrappers, which allows the user to pass a flag by default if it is not
+specified otherwise.
 
 And the last costs are the extra `if` statements. One has to check wether an
 error message should be printed or not. Although, this overhead can be removed
 as well, as the main purpose of `meaculpa` is debugging, therefore a correct,
-production-ready code can remove the extra checkings by placing `#ifdef`s at the
-right places.
+production-ready, and already tested/debugged code can remove the extra
+checkings by placing `#ifdef`s at the right places.
 
 All in all, the cost of `meaculpa` is very very small, especially compared to
-other solutions!
+other solutions &mdash; it is only a fraction of those!
 
 
 
@@ -115,7 +115,7 @@ Dependencies
 > [mingw-w64](http://mingw-w64.org/doku.php)) is on its way!
 
 <!-- -->
-> **SUPPORTED STANDARDS:** `meaculpa` requires C99 or later
+> **SUPPORTED STANDARDS:** `meaculpa` requires C99 or later (C11 recommended)
 
 For end-users:
 
@@ -129,14 +129,28 @@ For end-users:
 For developers:
 
 - [git](https://git-scm.com) *(2.6.4+)*
-- [gcc](https://gcc.gnu.org) *(5.3.0+)* or
-  [clang](http://clang.llvm.org) *(3.7.0+)*
+- [gcc](https://gcc.gnu.org) *(5.3.0+)*
+- [clang](http://clang.llvm.org) *(3.7.0+)*
 - [ar](https://www.gnu.org/software/binutils) *(2.25.1)+*
 - [bash](https://www.gnu.org/software/bash) *(4.3.42+)*
 - [valgrind](http://valgrind.org) *(3.11.0+)*
 - [clang-analyzer](http://clang-analyzer.llvm.org)  *(3.7.0+)*
 - [tup](http://gittup.org/tup) *(0.7.3+)*
 - [rainicorn](https://github.com/petervaro/rainicorn) *(0.1.2+)*
+
+
+
+Install utility
+---------------
+
+The next three sections will demonstrate the default installation of `meaculpa`,
+that is, using `gcc`, installing the headers at `/usr/local/include` and
+installing libraries at `/usr/local/lib`. For further information and available
+settings on how to use the included `install.sh` utility run:
+
+```bash
+bash install.sh --help
+```
 
 
 
@@ -147,17 +161,12 @@ End-user build and install
 $ git clone https://github.com/petervaro/meaculpa.git
 $ cd meaculpa
 $ bash install.sh
-
-# Alternatively one can build meaculpa with 'clang'
-$ bash install.sh clang
 ```
 
 
 
 Developer build and install
 ---------------------------
-
-Build and install:
 
 ```bash
 $ git clone --recursive https://github.com/petervaro/meaculpa.git
@@ -173,7 +182,7 @@ Uninstall
 ---------
 
 ```bash
-$ bash install.sh remove
+$ bash install.sh --remove
 ```
 
 
@@ -401,9 +410,10 @@ where `n` can be `1..16`.
 > `mc_INVALID_VALUE(3)`, `mc_INVALID_VALUE(4)` and `mc_INVALID_VALUE(5)` should
 > be used.
 
-There is another implicit advantage of markers: one can mute all the marked
+There are two implicit advantages of the markers: one can mute all the marked
 errors of the same base, by simply passing or `|`-ing the error without any
-marker as/to the mute-flag.
+markera as/to the mute-flags, and one can handle all marked errors of the same
+base, without the need to explicitly check every marked version of it.
 
 **`mc_Error` representation functions:**
 
@@ -439,7 +449,8 @@ formatted.
 **Stream management functions:**
 
 ```C
-void mc_stream_ini(void);
+void
+mc_stream_ini(void);
 ```
 Initializes the stream-access mutex and the stream itself. It has to be called
 before anything (most likely in the beginning of the `main` function) if: 1. the
@@ -450,20 +461,23 @@ previously listed conditions are met, it is unnecessary to call this function,
 though it is highly recommended for easier code maintainability in the future.
 
 ```C
-void mc_stream_fin(void);
+void
+mc_stream_fin(void);
 ```
 Finalizes the stream-access mutex and the stream itself. It has to be called
 after anything (most likely at the end of the `main` function) if
 `mc_stream_ini` has been used before.
 
 ```C
-mc_Error mc_stream_set(FILE     *stream,
-                       mc_Error  muted);
+mc_Error
+mc_stream_set(FILE     *stream,
+              mc_Error  muted);
 ```
 Specifies the stream where `mc_Error_put` will print the error messages and the
 traceback. This can be very useful, when the program should log these into an
 external file, instead of printing them to the `stderr` stream for example. This
 function can return:
+
 - `mc_OKAY` if there was no error
 - `mc_ARG_IS_NULL` if `FILE *stream` is `NULL`
 
