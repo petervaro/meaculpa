@@ -44,7 +44,6 @@ lib      = meaculpa
     |> !to_obj                                                                 \
     |> $(BUILD_DIR)/samples/%B.$(OBJ_EXT) {bin_build}
 
-
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Build binaries from sample-objects
 LIBS = -l$(lib)

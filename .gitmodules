@@ -1,3 +1,6 @@
 [submodule "tuplet"]
 	path = tuplet
 	url = https://github.com/petervaro/tuplet.git
+[submodule "mininstall"]
+	path = mininstall
+	url = https://github.com/petervaro/mininstall.git
