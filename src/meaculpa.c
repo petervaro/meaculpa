@@ -7,6 +7,8 @@
 /*  type  : FILE
     const : stderr
     func  : fputs */
+#include <stddef.h>
+/*  const : NULL */
 #include <stdarg.h>
 /*  type  : va_list
     macro : va_start
@@ -16,14 +18,19 @@
 /*  func  : abs */
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/* Include posix headers */
-#include <pthread.h>
-/*  const : PTHREAD_MUTEX_INITIALIZER
-    type  : pthread_mutex_t
-    func  : pthread_mutex_init
-            pthread_mutex_destroy
-            pthread_mutex_lock
-            pthread_mutex_unlock */
+/* Include threads headers */
+#include <threads/threads.h>
+/*  type  : mtx_t
+    const : mtx_plain
+    func  : mtx_init
+            mtx_destroy
+            mtx_lock
+            mtx_unlock */
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Include syswrap headers */
+#include <syswrap/io.h>
+/*  func  : sw_isatty */
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Include rainicorn headers */
@@ -42,8 +49,8 @@
 
 
 /*----------------------------------------------------------------------------*/
-static FILE            *mc_STREAM        = NULL;
-static pthread_mutex_t  mc_STREAM_ACCESS = PTHREAD_MUTEX_INITIALIZER;
+static FILE  *mc_STREAM = NULL;
+static mtx_t  mc_STREAM_ACCESS;
 
 
 /*----------------------------------------------------------------------------*/
@@ -137,7 +144,7 @@ static const char *const mc_ERRORS[] =
 };
 
 
-/*----------------------------------------------------------------------------*/
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 const char*
 mc_Error_str(mc_Error error)
 {
@@ -164,25 +171,17 @@ mc_Error_str(mc_Error error)
 }
 
 
-/*----------------------------------------------------------------------------*/
-void
-mc_Error__put(mc_Error    error,
-              const char *function,
-              const char *file,
-              int         messages,
-           /* const char* */ ...)
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+static inline void
+mc_Error__put_tty(FILE       *stream,
+                  mc_Error    error,
+                  const char *function,
+                  const char *file,
+                  int         messages,
+                  va_list     lines)
 {
-    #ifndef MC_FAST
-        FILE *restrict stream = mc_STREAM ? mc_STREAM : stderr;
-    #else
-        #define stream mc_STREAM
-    #endif
-
-    int     i;
-    va_list args;
-
-    /* Lock access to stream */
-    pthread_mutex_lock(&mc_STREAM_ACCESS);
+    /* Local variables */
+    int i;
 
     /* If this is where the error occured */
     if (messages < 0)
@@ -195,13 +194,9 @@ mc_Error__put(mc_Error    error,
         fputs(RC_XFS(" => "), stream);
         if (messages)
         {
-            va_start(args, messages);
             fputs(RC_S(RC_BOLD, ""), stream);
-
             for (i=0; i<abs(messages); i++)
-                fputs(va_arg(args, const char *restrict), stream);
-
-            va_end(args);
+                fputs(va_arg(lines, const char *restrict), stream);
         }
         else
             fputs(RC_FS(RC_BLACK, RC_BOLD, "[No error message specified]"),
@@ -219,7 +214,7 @@ mc_Error__put(mc_Error    error,
             fputs(")\n", stream);
         }
     }
-    /* If the error returned by a function called inside this function */
+    /* If the error occured elsewhere, and this is just a propagation */
     else if (function)
     {
         fputs(RC_F(RC_YELLOW, "> ")
@@ -230,25 +225,117 @@ mc_Error__put(mc_Error    error,
         /* If there are extra hints passed */
         if (messages)
         {
-            va_start(args, messages);
             fputs(RC_FS(RC_MAGENTA, RC_NORMAL, " (Note: "), stream);
-
             for (i=0; i<abs(messages); i++)
-                fputs(va_arg(args, const char *restrict), stream);
-
+                fputs(va_arg(lines, const char *restrict), stream);
             fputs(")", stream);
-            va_end(args);
         }
 
         fputs(RC_XFBS("\n"), stream);
     }
+}
+
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+static inline void
+mc_Error__put_etc(FILE       *stream,
+                  mc_Error    error,
+                  const char *function,
+                  const char *file,
+                  int         messages,
+                  va_list     lines)
+{
+/* Local variables */
+    int i;
+
+    /* If this is where the error occured */
+    if (messages < 0)
+    {
+        fputs("\nRuntime error: ", stream);
+        fputs(mc_Error_str(error), stream);
+
+        /* If there are error messages passed */
+        fputs(" => ", stream);
+        if (messages)
+            for (i=0; i<abs(messages); i++)
+                fputs(va_arg(lines, const char *restrict), stream);
+        else
+            fputs("[No error message specified]", stream);
+        fputs("\n", stream);
+
+        /* If function name is not NULL */
+        if (function)
+        {
+            fputs("While calling: ", stream);
+            fputs(function, stream);
+            fputs(" (File: ", stream);
+            fputs(file, stream);
+            fputs(")\n", stream);
+        }
+    }
+    /* If the error occured elsewhere, and this is just a propagation */
+    else if (function)
+    {
+        fputs("> Called from: ", stream);
+        fputs(function, stream);
+
+        /* If there are extra hints passed */
+        if (messages)
+        {
+            fputs(" (Note: ", stream);
+            for (i=0; i<abs(messages); i++)
+                fputs(va_arg(lines, const char *restrict), stream);
+            fputs(")", stream);
+        }
+
+        fputs("\n", stream);
+    }
+}
+
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+void
+mc_Error__put(mc_Error    error,
+              const char *function,
+              const char *file,
+              int         messages,
+           /* const char* */ ...)
+{
+    /* Local variables */
+    va_list lines;
+
+    #ifndef MC_FAST
+        /* If stream is not initialized yet */
+        if (!mc_STREAM)
+        {
+            /* TODO: **warnings**
+                     Consider to add runtime-warning option to meaculpa.
+                     Warnings should be removed if FAST is defined. Otherwise
+                     warning should be raised only if the error is safely
+                     handled, but it should've never happenned */
+            fputs("Warning: stream is uninitialized for mc_Error", stderr);
+            mc_stream_ini();
+        }
+    #endif
+
+    /* Lock access to stream */
+    mtx_lock(&mc_STREAM_ACCESS);
+
+    /* Initialize va_list */
+    va_start(lines, messages);
+
+    /* If stream is connected to a terminal */
+    if (sw_isatty(mc_STREAM))
+        mc_Error__put_tty(mc_STREAM, error, function, file, messages, lines);
+    /* If stream is not connected to a terminal */
+    else
+        mc_Error__put_etc(mc_STREAM, error, function, file, messages, lines);
+
+    /* Finalize va_list */
+    va_end(lines);
 
     /* Grant access to stream */
-    pthread_mutex_unlock(&mc_STREAM_ACCESS);
-
-    #ifdef MC_FAST
-        #undef stream
-    #endif
+    mtx_unlock(&mc_STREAM_ACCESS);
 }
 
 
@@ -257,16 +344,16 @@ void
 mc_stream_ini(void)
 {
     /* Initialize access mutex */
-    pthread_mutex_init(&mc_STREAM_ACCESS, NULL);
+    mtx_init(&mc_STREAM_ACCESS, mtx_plain);
 
     /* Lock access to stream */
-    pthread_mutex_lock(&mc_STREAM_ACCESS);
+    mtx_lock(&mc_STREAM_ACCESS);
 
     /* Set default stream */
     mc_STREAM = stderr;
 
     /* Grant access to stream */
-    pthread_mutex_unlock(&mc_STREAM_ACCESS);
+    mtx_unlock(&mc_STREAM_ACCESS);
 }
 
 
@@ -274,13 +361,11 @@ mc_stream_ini(void)
 void
 mc_stream_fin(void)
 {
-    pthread_mutex_destroy(&mc_STREAM_ACCESS);
+    mtx_destroy(&mc_STREAM_ACCESS);
 }
 
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-/* Return : mc_Error_OKAY
-            mc_Error_ARG_IS_NULL */
 mc_Error
 mc_stream_set(FILE     *stream,
               mc_Error  muted)
@@ -295,13 +380,13 @@ mc_stream_set(FILE     *stream,
     }
 
     /* Lock access to stream */
-    pthread_mutex_lock(&mc_STREAM_ACCESS);
+    mtx_lock(&mc_STREAM_ACCESS);
 
     /* Set new stream */
     mc_STREAM = stream;
 
     /* Grant access to stream */
-    pthread_mutex_unlock(&mc_STREAM_ACCESS);
+    mtx_unlock(&mc_STREAM_ACCESS);
 
     return mc_OKAY;
 }

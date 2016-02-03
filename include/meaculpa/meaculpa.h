@@ -86,7 +86,7 @@ extern const mc_Error   mc_OKAY,
          user defined ones. The only drawback I see right now, is how to manage,
          if there are at least two libraries trying to work together and both
          are using meaculpa and trying to overload the mc_Error_str method with
-         theirown versions? Not to mention the overlapping error constants. One
+         their own versions? Not to mention the overlapping error constants. One
          possible solution could be the explicit passing of mc_Error_str to
          mc_Error__put each time it is called.. so much overhead :( */
 const char*
@@ -99,10 +99,11 @@ mc_Error_str(mc_Error error);
          Rationale: meaculpa should work in a threaded environment. If there are
          multiple threads printing to the same unbuffered stream, the output
          will be chaotic and the back-trace would be useless. But if the user
-         has and option to print the back-trace into a buffer, which is used by
+         has the option to print the back-trace into a buffer, which is used by
          a single thread, then at the end, when threads are joined or aborted
          the parent process could print out the whole back-trace at once from
-         the buffer */
+         the buffer. Don't forget to add an option to use buffer as TTY or not
+         (should the buffer store the ASCII escape sequences or not) */
 void
 mc_Error__put(mc_Error    error,
               const char *function,
@@ -120,10 +121,6 @@ mc_stream_fin(void);
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Return : mc_Error_OKAY
             mc_Error_ARG_IS_NULL */
-/* TODO: **colored**
-         A stream should be initialized as if it can deal with ASCII color
-         sequences or not. The mc_Error_put should take into account wether a
-         stream is colored or not */
 mc_Error
 mc_stream_set(FILE     *stream,
               mc_Error  muted);

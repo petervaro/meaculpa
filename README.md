@@ -1,4 +1,9 @@
-![meaculpa](img/logo.png?raw=true "logo")
+[![[license: GPLv3]][1]][2]
+[![[standard: ISO C11]][3]][4]
+
+- - -
+
+![meaculpa][5]
 
 - [What is `meaculpa`?](#what-is-meaculpa)
 - [Why is it called `meaculpa`?](#why-is-it-called-meaculpa)
@@ -124,6 +129,8 @@ For end-users:
   [clang](http://clang.llvm.org) *(3.7.0+)*
 - [ar](https://www.gnu.org/software/binutils) *(2.25.1)+*
 - [bash](https://www.gnu.org/software/bash) *(4.3.42+)*
+- [threads](https://github.com/petervaro/threads) *(0.1.0+)*
+- [syswrap](https://github.com/petervaro/syswrap) *(0.1.0+)*
 - [rainicorn](https://github.com/petervaro/rainicorn) *(0.1.2+)*
 
 For developers:
@@ -136,6 +143,8 @@ For developers:
 - [valgrind](http://valgrind.org) *(3.11.0+)*
 - [clang-analyzer](http://clang-analyzer.llvm.org)  *(3.7.0+)*
 - [tup](http://gittup.org/tup) *(0.7.3+)*
+- [threads](https://github.com/petervaro/threads) *(0.1.0+)*
+- [syswrap](https://github.com/petervaro/syswrap) *(0.1.0+)*
 - [rainicorn](https://github.com/petervaro/rainicorn) *(0.1.2+)*
 
 
@@ -412,7 +421,7 @@ where `n` can be `1..16`.
 
 There are two implicit advantages of the markers: one can mute all the marked
 errors of the same base, by simply passing or `|`-ing the error without any
-markera as/to the mute-flags, and one can handle all marked errors of the same
+markers as/to the mute-flags, and one can handle all marked errors of the same
 base, without the need to explicitly check every marked version of it.
 
 **`mc_Error` representation functions:**
@@ -421,7 +430,7 @@ base, without the need to explicitly check every marked version of it.
 const char*
 mc_Error_str(mc_Error error);
 ```
-The function will return the string representation of an error as a `NULL`
+The function will return the string representation of an error as a null-
 terminated C-string. It does not care wether the error is marked or not, it will
 return the unmarked representation of the error.
 For example:
@@ -500,3 +509,18 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program, most likely a file in the root directory, called 'LICENSE'.
 If not, see <http://www.gnu.org/licenses>.
+
+- - -
+
+The font used in the logo is called **Shadows Into Light**. It is licensed under
+the [SIL Open Font License v1.10](http://scripts.sil.org/OFL).
+
+Copyright &copy; 2010 **Kimberly Geswein**
+
+<!-- -->
+
+[1]: https://img.shields.io/badge/license-GNU_General_Public_License_v3.0-blue.svg
+[2]: http://www.gnu.org/licenses/gpl.html
+[3]: https://img.shields.io/badge/standard-ISO_C11-lightgrey.svg
+[4]: http://www.open-std.org/jtc1/sc22/WG14/www/docs/n1570.pdf
+[5]: img/logo.png?raw=true "MEACULPA"

@@ -64,17 +64,27 @@ div_default(int       dividend,
 
 /*----------------------------------------------------------------------------*/
 int
-main(void)
+main(int          argc,
+     const char **argv)
 {
-    int      i,
-             result = 0;
-    mc_Error error;
+    int       i,
+              result = -1;
+    mc_Error  error;
+    FILE     *stream;
 
-    for (i=0; i<5; i++)
+    if (argc <= 1)
     {
-        div_default(5, i, &result, 0, mc_MUTE_NONE);
-        printf("result = %d\n", result);
+        fputs("Missing first argument: output-stream\n", stderr);
+        return EXIT_FAILURE;
     }
+
+    if (!(stream = fopen(argv[1], "wb")))
+    {
+        fputs("Cannot open 'stream'\n", stderr);
+        return EXIT_FAILURE;
+    }
+
+    mc_stream_ini();
 
     for (i=0; i<5; i++)
     {
@@ -85,6 +95,21 @@ main(void)
         }
         printf("result = %d\n", result);
     }
+
+    mc_stream_set(stream, mc_MUTE_NONE);
+
+    for (i=0; i<5; i++)
+    {
+        if ((error = div_default(5, i, NULL, 0, mc_MUTE_NONE)))
+        {
+            mc_Error_put(error, 1, "Cannot divide 5 / i");
+            break;
+        }
+        printf("result = %d\n", result);
+    }
+
+    mc_stream_fin();
+    fclose(stream);
     return EXIT_SUCCESS;
 }
 

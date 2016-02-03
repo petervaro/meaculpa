@@ -9,6 +9,8 @@ CPPPATH += -I$(INCLUDE_DIR)
 LIBPATH += -L$(LIBRARY_DIR)
 LIBS    += -lpthread
 LIBS    += -ljemalloc
+LIBS    += -lsyswrap
+LIBS    += -lthreads
 lib      = meaculpa
 
 
@@ -46,15 +48,15 @@ lib      = meaculpa
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Build binaries from sample-objects
-LIBS = -l$(lib)
+LIBS += -l$(lib)
 : foreach {bin_build} | {lib}                                                  \
     |> !to_bin $(LIBS)                                                         \
     |> $(BINARY_DIR)/samples/%B$(BIN_EXT) {bin}
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Run sample binaries
-ENV_VARS = LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(LIBRARY_DIR)
-: foreach {bin} | {lib} |> !run_it |>
+ENV_VARS = LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:$(LIBRARY_DIR)
+: foreach {bin} | {lib} |> !run_it %o |> output-%B
 
 
 

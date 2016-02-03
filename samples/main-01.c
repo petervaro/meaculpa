@@ -82,7 +82,8 @@ manage_backups(const char *name,
 
 /*----------------------------------------------------------------------------*/
 int
-main(void)
+main(int          argc,
+     const char **argv)
 {
     #ifdef MUTE_ALL
         #define MUTED mc_MUTE_ALL
@@ -90,11 +91,35 @@ main(void)
         #define MUTED mc_MUTE_NONE
     #endif
 
-    mc_Error error;
+    mc_Error  error;
+    FILE     *stream;
+
+    if (argc <= 1)
+    {
+        fputs("Missing first argument: output-stream\n", stderr);
+        return EXIT_FAILURE;
+    }
+
+    if (!(stream = fopen(argv[1], "wb")))
+    {
+        fputs("Cannot open 'stream'\n", stderr);
+        return EXIT_FAILURE;
+    }
+
+    mc_stream_ini();
+
     if ((error = manage_backups("example", MUTED)))
         if (~MUTED & error)
             mc_Error_put(error, 1, "Failed to manage backups");
 
+    mc_stream_set(stream, mc_MUTE_NONE);
+
+    if ((error = manage_backups("example", MUTED)))
+        if (~MUTED & error)
+            mc_Error_put(error, 1, "Failed to manage backups");
+
+    mc_stream_fin();
+    fclose(stream);
     return EXIT_SUCCESS;
 }
 

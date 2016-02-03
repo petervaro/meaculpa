@@ -2,6 +2,12 @@
 ** INFO */
 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+#include <stdio.h>
+/*  type  : FILE
+    value : stderr
+    func  : fputs
+            fopen
+            fclose */
 #include <stdlib.h>
 /*  const : EXIT_FAILURE
             EXIT_SUCCESS */
@@ -29,15 +35,36 @@ wrapper(mc_Error muted);
 
 /*----------------------------------------------------------------------------*/
 int
-main(void)
+main(int          argc,
+     const char **argv)
 {
+    mc_Error  error;
+    FILE     *stream;
+
+    if (argc <= 1)
+    {
+        fputs("Missing first argument: output-stream\n", stderr);
+        return EXIT_FAILURE;
+    }
+
+    if (!(stream = fopen(argv[1], "wb")))
+    {
+        fputs("Cannot open 'stream'\n", stderr);
+        return EXIT_FAILURE;
+    }
+
     mc_stream_ini();
 
-    mc_Error error;
+    if ((error = wrapper(mc_MUTE_NONE)))
+        mc_Error_put(error, 1, "Unexpected error in 'wrapper'");
+
+    mc_stream_set(stream, mc_MUTE_NONE);
+
     if ((error = wrapper(mc_MUTE_NONE)))
         mc_Error_put(error, 1, "Unexpected error in 'wrapper'");
 
     mc_stream_fin();
+    fclose(stream);
     return EXIT_SUCCESS;
 }
 
